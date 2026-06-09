@@ -12,16 +12,19 @@ jobs:
           sudo apt update
           sudo apt install -y build-essential g++ gcc-multilib flex bison libncurses5-dev git unzip zlib1g-dev libssl-dev wget curl lib32z1 lib32stdc++6
 
-      - name: 拉取Padavan源码与mwan3helper分流插件
+      - name: 拉取Padavan源码与mwan3helper分流插件（国内镜像加速）
         run: |
-          # 必须克隆到 /opt/rt-n56u 目录，否则工具链路径会出错
-          sudo git clone https://github.com/hanwckf/rt-n56u.git /opt/rt-n56u
-          git clone https://github.com/srfj/padavan-mwan3helper.git mwan3helper
+          # 使用 Gitee 镜像加速克隆，解决 GitHub 网络问题
+          sudo git clone https://gitee.com/hanwckf/rt-n56u.git /opt/rt-n56u
+          git clone https://gitee.com/srfj/padavan-mwan3helper.git mwan3helper
 
-      - name: 构建交叉编译工具链（必须步骤，耗时约10-15分钟）
+      - name: 验证工具链目录并构建交叉编译工具链
         run: |
           cd /opt/rt-n56u/toolchain-mipsel
-          ./clean_sources
+          # 先列出目录文件，确认脚本名称（日志中会显示）
+          ls -la
+          # 使用新版正确的清理脚本
+          ./clean.sh
           ./build_toolchain
 
       - name: 载入XY-C1官方机型配置
@@ -32,12 +35,9 @@ jobs:
       - name: 按官方规范集成mwan3helper插件
         run: |
           cd /opt/rt-n56u/trunk
-          # 只需要复制到user目录注册编译即可，无需重复复制到根目录
           mkdir -p user/mwan3helper
           cp -rf $GITHUB_WORKSPACE/mwan3helper/* user/mwan3helper/
           echo "obj-y += mwan3helper/" >> user/Makefile
-          
-          # 开启插件配置开关
           echo "CONFIG_FIRMWARE_INCLUDE_MWAN3HELPER=y" >> .config
 
       - name: 按你的需求修改固件开关
