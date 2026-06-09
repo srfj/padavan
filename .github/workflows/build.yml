@@ -14,9 +14,9 @@ jobs:
         run: |
           git clone https://github.com/hanwckf/rt-n56u.git padavan
           git clone https://github.com/srfj/padavan-mwan3helper.git mwan3helper
-          # 检查是否下载成功
-          ls -la
+          # 查看仓库结构，确认文件位置
           ls -la mwan3helper/
+          ls -la mwan3helper/files/
 
       - name: 载入小娱XY-C1配置
         run: |
@@ -26,11 +26,13 @@ jobs:
       - name: 集成mwan3helper分流插件（修复路径）
         run: |
           cd padavan/trunk
-          # 从工作目录直接引用，避免路径层级问题
-          cp -rf $GITHUB_WORKSPACE/mwan3helper/www .
-          cp -rf $GITHUB_WORKSPACE/mwan3helper/opt .
+          # 从files目录复制文件
+          cp -rf $GITHUB_WORKSPACE/mwan3helper/files/www ./
+          cp -rf $GITHUB_WORKSPACE/mwan3helper/files/opt ./
+          # 复制插件源码到user目录
           mkdir -p user/mwan3helper
           cp -rf $GITHUB_WORKSPACE/mwan3helper/* user/mwan3helper/
+          # 注册插件到编译系统
           echo "obj-y += mwan3helper/" >> user/Makefile
           echo "CONFIG_FIRMWARE_INCLUDE_MWAN3HELPER=y" >> .config
 
