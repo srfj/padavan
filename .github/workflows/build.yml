@@ -7,10 +7,10 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - name: 安装官方编译依赖环境
+      - name: 安装官方编译依赖环境（补全缺失的 help2man）
         run: |
           sudo apt update
-          sudo apt install -y build-essential g++ gcc-multilib flex bison libncurses5-dev git unzip zlib1g-dev libssl-dev wget curl lib32z1 lib32stdc++6
+          sudo apt install -y build-essential g++ gcc-multilib flex bison libncurses5-dev git unzip zlib1g-dev libssl-dev wget curl lib32z1 lib32stdc++6 help2man
 
       - name: 拉取Padavan源码与mwan3helper分流插件（纯GitHub原生）
         run: |
@@ -20,7 +20,6 @@ jobs:
       - name: 构建交叉编译工具链（已修正脚本名称）
         run: |
           cd /opt/rt-n56u/toolchain-mipsel
-          # 使用目录中真实存在的清理脚本
           ./clean_toolchain
           ./build_toolchain
 
