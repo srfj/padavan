@@ -14,17 +14,14 @@ jobs:
 
       - name: 拉取Padavan源码与mwan3helper分流插件（纯GitHub原生）
         run: |
-          # 完全使用GitHub官方仓库，适配云编译环境
           sudo git clone https://github.com/hanwckf/rt-n56u.git /opt/rt-n56u
           git clone https://github.com/srfj/padavan-mwan3helper.git mwan3helper
 
-      - name: 验证工具链目录并构建交叉编译工具链
+      - name: 构建交叉编译工具链（已修正脚本名称）
         run: |
           cd /opt/rt-n56u/toolchain-mipsel
-          # 打印目录文件，日志中可确认脚本名称（用于排查）
-          ls -la
-          # 使用新版正确的清理脚本（已修复原clean_sources不存在的错误）
-          ./clean.sh
+          # 使用目录中真实存在的清理脚本
+          ./clean_toolchain
           ./build_toolchain
 
       - name: 载入XY-C1官方机型配置
