@@ -1,0 +1,60 @@
+name: Padavan XY-C1 mwan3helper 纯净版
+
+on:
+  workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: 初始化编译环境
+        run: sudo apt update && sudo apt install -y build-essential g++ gcc-multilib flex bison libncurses5-dev git unzip zlib1g-dev libssl-dev wget curl
+
+      - name: 拉取Padavan源码与mwan3helper插件
+        run: |
+          git clone https://github.com/hanwckf/rt-n56u.git padavan
+          git clone https://github.com/srfj/padavan-mwan3helper.git mwan3helper
+
+      - name: 载入小娱XY-C1配置
+        run: |
+          cd padavan/trunk
+          cp configs/templates/XY-C1.config .config
+
+      - name: 集成mwan3helper分流插件
+        run: |
+          cd padavan/trunk
+          cp -rf ../../mwan3helper/www .
+          cp -rf ../../mwan3helper/opt .
+          mkdir -p user/mwan3helper
+          cp -rf ../../mwan3helper/* user/mwan3helper/
+          echo "obj-y += mwan3helper/" >> user/Makefile
+          echo "CONFIG_FIRMWARE_INCLUDE_MWAN3HELPER=y" >> .config
+
+      - name: 自定义固件配置
+        run: |
+          cd padavan/trunk
+
+          # 关闭USB
+          sed -i 's/CONFIG_FIRMWARE_ENABLE_USB=y/CONFIG_FIRMWARE_ENABLE_USB=n/' .config
+          sed -i 's/CONFIG_FIRMWARE_ENABLE_USB_EXT=y/CONFIG_FIRMWARE_ENABLE_USB_EXT=n/' .config
+
+          # 开启IPv6
+          sed -i 's/CONFIG_FIRMWARE_ENABLE_IPV6=n/CONFIG_FIRMWARE_ENABLE_IPV6=y/' .config
+
+          # 保留Telnet，默认关闭
+          sed -i 's/CONFIG_FIRMWARE_ENABLE_TELNET=n/CONFIG_FIRMWARE_ENABLE_TELNET=y/' .config
+
+          # 禁用所有其他插件
+          sed -i 's/CONFIG_FIRMWARE_ENABLE_ALL_PLUGINS=y/CONFIG_FIRMWARE_ENABLE_ALL_PLUGINS=n/' .config
+
+      - name: 开始编译
+        run: |
+          cd padavan
+          ./clear.sh
+          ./build_firmware.sh
+
+      - name: 上传固件
+        uses: actions/upload-artifact@v4
+        with:
+          name: XY-C1-Padavan-mwan3-ipv6
+          path: /home/runner/padavan/trunk/images/*.trx
