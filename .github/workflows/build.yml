@@ -14,19 +14,23 @@ jobs:
         run: |
           git clone https://github.com/hanwckf/rt-n56u.git padavan
           git clone https://github.com/srfj/padavan-mwan3helper.git mwan3helper
+          # 检查是否下载成功
+          ls -la
+          ls -la mwan3helper/
 
       - name: 载入小娱XY-C1配置
         run: |
           cd padavan/trunk
           cp configs/templates/XY-C1.config .config
 
-      - name: 集成mwan3helper分流插件
+      - name: 集成mwan3helper分流插件（修复路径）
         run: |
           cd padavan/trunk
-          cp -rf ../../mwan3helper/www .
-          cp -rf ../../mwan3helper/opt .
+          # 从工作目录直接引用，避免路径层级问题
+          cp -rf $GITHUB_WORKSPACE/mwan3helper/www .
+          cp -rf $GITHUB_WORKSPACE/mwan3helper/opt .
           mkdir -p user/mwan3helper
-          cp -rf ../../mwan3helper/* user/mwan3helper/
+          cp -rf $GITHUB_WORKSPACE/mwan3helper/* user/mwan3helper/
           echo "obj-y += mwan3helper/" >> user/Makefile
           echo "CONFIG_FIRMWARE_INCLUDE_MWAN3HELPER=y" >> .config
 
@@ -57,4 +61,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: XY-C1-Padavan-mwan3-ipv6
-          path: /home/runner/padavan/trunk/images/*.trx
+          path: /home/runner/work/padavan/padavan/padavan/trunk/images/*.trx
