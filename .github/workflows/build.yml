@@ -14,7 +14,6 @@ jobs:
         run: |
           git clone https://github.com/hanwckf/rt-n56u.git padavan
           git clone https://github.com/srfj/padavan-mwan3helper.git mwan3helper
-          # 查看仓库结构，确认文件位置
           ls -la mwan3helper/
           ls -la mwan3helper/files/
 
@@ -23,33 +22,29 @@ jobs:
           cd padavan/trunk
           cp configs/templates/XY-C1.config .config
 
-      - name: 集成mwan3helper分流插件（修复路径）
+      - name: 集成mwan3helper（只复制存在的目录）
         run: |
           cd padavan/trunk
-          # 从files目录复制文件
+          # 只复制 etc sbin www，删除不存在的opt
           cp -rf $GITHUB_WORKSPACE/mwan3helper/files/www ./
-          cp -rf $GITHUB_WORKSPACE/mwan3helper/files/opt ./
-          # 复制插件源码到user目录
+          cp -rf $GITHUB_WORKSPACE/mwan3helper/files/etc ./
+          cp -rf $GITHUB_WORKSPACE/mwan3helper/files/sbin ./
+          # 复制插件源码到user
           mkdir -p user/mwan3helper
           cp -rf $GITHUB_WORKSPACE/mwan3helper/* user/mwan3helper/
-          # 注册插件到编译系统
           echo "obj-y += mwan3helper/" >> user/Makefile
           echo "CONFIG_FIRMWARE_INCLUDE_MWAN3HELPER=y" >> .config
 
       - name: 自定义固件配置
         run: |
           cd padavan/trunk
-
           # 关闭USB
           sed -i 's/CONFIG_FIRMWARE_ENABLE_USB=y/CONFIG_FIRMWARE_ENABLE_USB=n/' .config
           sed -i 's/CONFIG_FIRMWARE_ENABLE_USB_EXT=y/CONFIG_FIRMWARE_ENABLE_USB_EXT=n/' .config
-
           # 开启IPv6
           sed -i 's/CONFIG_FIRMWARE_ENABLE_IPV6=n/CONFIG_FIRMWARE_ENABLE_IPV6=y/' .config
-
-          # 保留Telnet，默认关闭
+          # 保留Telnet
           sed -i 's/CONFIG_FIRMWARE_ENABLE_TELNET=n/CONFIG_FIRMWARE_ENABLE_TELNET=y/' .config
-
           # 禁用所有其他插件
           sed -i 's/CONFIG_FIRMWARE_ENABLE_ALL_PLUGINS=y/CONFIG_FIRMWARE_ENABLE_ALL_PLUGINS=n/' .config
 
