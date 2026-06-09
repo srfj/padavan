@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - name: 安装官方完整依赖（照抄官方Debian/Ubuntu命令）
+      - name: 安装官方完整依赖（Debian/Ubuntu 原版）
         run: |
           sudo apt update
           sudo apt install -y unzip libtool-bin curl cmake gperf gawk flex bison nano xxd \
@@ -15,17 +15,21 @@ jobs:
           texinfo build-essential help2man pkg-config zlib1g-dev libgmp3-dev \
           libmpc-dev libmpfr-dev libncurses5-dev libltdl-dev wget libc-dev-bin
 
-      - name: 克隆Padavan源码（官方路径/命令）
+      - name: 克隆源码 + 修复目录权限
         run: |
           sudo git clone --depth=1 https://github.com/hanwckf/rt-n56u.git /opt/rt-n56u
           git clone https://github.com/srfj/padavan-mwan3helper.git mwan3helper
+          # 修复权限：给GitHub runner授权，解决权限不足问题
+          sudo chown -R $USER:$USER /opt/rt-n56u
 
-      - name: 官方推荐：下载预编译工具链（1分钟完成，零报错）
+      - name: 下载官方预编译工具链 + 创建软链接（修复gcc找不到）
         run: |
           cd /opt/rt-n56u/toolchain-mipsel
           sh dl_toolchain.sh
+          # 创建强制软链接，匹配固件编译的工具链路径
+          ln -sf /opt/rt-n56u/toolchain-mipsel/toolchain-3.4.x /toolchain-3.4.x
 
-      - name: 载入XY-C1机型配置
+      - name: 载入XY-C1配置
         run: |
           cd /opt/rt-n56u/trunk
           cp configs/templates/XY-C1.config .config
@@ -38,7 +42,7 @@ jobs:
           echo "obj-y += mwan3helper/" >> user/Makefile
           echo "CONFIG_FIRMWARE_INCLUDE_MWAN3HELPER=y" >> .config
 
-      - name: 自定义固件配置
+      - name: 自定义固件设置
         run: |
           cd /opt/rt-n56u/trunk
           sed -i 's/CONFIG_FIRMWARE_ENABLE_USB=y/CONFIG_FIRMWARE_ENABLE_USB=n/' .config
@@ -47,13 +51,13 @@ jobs:
           sed -i 's/CONFIG_FIRMWARE_ENABLE_TELNET=n/CONFIG_FIRMWARE_ENABLE_TELNET=y/' .config
           sed -i 's/CONFIG_FIRMWARE_ENABLE_ALL_PLUGINS=y/CONFIG_FIRMWARE_ENABLE_ALL_PLUGINS=n/' .config
 
-      - name: 官方标准清理+编译固件
+      - name: 官方标准编译（修复脚本执行错误）
         run: |
           cd /opt/rt-n56u/trunk
           ./clear_tree
-          fakeroot ./build_firmware.sh
+          fakeroot -- bash ./build_firmware.sh
 
-      - name: 上传编译完成的固件
+      - name: 上传固件
         uses: actions/upload-artifact@v4
         with:
           name: XY-C1-Padavan-mwan3-ipv6
