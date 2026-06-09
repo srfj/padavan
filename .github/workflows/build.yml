@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - name: 安装官方完整依赖（Debian/Ubuntu 原版）
+      - name: 安装官方完整依赖
         run: |
           sudo apt update
           sudo apt install -y unzip libtool-bin curl cmake gperf gawk flex bison nano xxd \
@@ -21,11 +21,10 @@ jobs:
           git clone https://github.com/srfj/padavan-mwan3helper.git mwan3helper
           sudo chown -R $USER:$USER /opt/rt-n56u
 
-      - name: 下载官方预编译工具链 + 用sudo创建软链接（修复权限）
+      - name: 下载官方预编译工具链 + 创建软链接
         run: |
           cd /opt/rt-n56u/toolchain-mipsel
           sh dl_toolchain.sh
-          # 加上sudo，获得创建根目录软链接的权限
           sudo ln -sf /opt/rt-n56u/toolchain-mipsel/toolchain-3.4.x /toolchain-3.4.x
 
       - name: 载入XY-C1配置
@@ -50,11 +49,17 @@ jobs:
           sed -i 's/CONFIG_FIRMWARE_ENABLE_TELNET=n/CONFIG_FIRMWARE_ENABLE_TELNET=y/' .config
           sed -i 's/CONFIG_FIRMWARE_ENABLE_ALL_PLUGINS=y/CONFIG_FIRMWARE_ENABLE_ALL_PLUGINS=n/' .config
 
-      - name: 官方标准编译
+      - name: 【关键修复】编译固件（验证脚本存在+加权限+绝对路径）
         run: |
+          # 1. 强制进入正确目录
           cd /opt/rt-n56u/trunk
+          # 2. 验证脚本是否存在（日志会显示文件列表，方便排查）
+          ls -la build_firmware.sh clear_tree
+          # 3. 给脚本添加执行权限
+          chmod +x build_firmware.sh clear_tree
+          # 4. 清理+编译（使用绝对路径，避免相对路径问题）
           ./clear_tree
-          fakeroot ./build_firmware.sh
+          fakeroot /opt/rt-n56u/trunk/build_firmware.sh
 
       - name: 上传固件
         uses: actions/upload-artifact@v4
