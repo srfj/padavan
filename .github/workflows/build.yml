@@ -8,27 +8,31 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: 安装官方编译依赖环境
-        run: sudo apt update && sudo apt install -y build-essential g++ gcc-multilib flex bison libncurses5-dev git unzip zlib1g-dev libssl-dev wget curl
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential g++ gcc-multilib flex bison libncurses5-dev git unzip zlib1g-dev libssl-dev wget curl lib32z1 lib32stdc++6
 
       - name: 拉取Padavan源码与mwan3helper分流插件
         run: |
-          git clone https://github.com/hanwckf/rt-n56u.git padavan
+          # 必须克隆到 /opt/rt-n56u 目录，否则工具链路径会出错
+          sudo git clone https://github.com/hanwckf/rt-n56u.git /opt/rt-n56u
           git clone https://github.com/srfj/padavan-mwan3helper.git mwan3helper
+
+      - name: 构建交叉编译工具链（必须步骤，耗时约10-15分钟）
+        run: |
+          cd /opt/rt-n56u/toolchain-mipsel
+          ./clean_sources
+          ./build_toolchain
 
       - name: 载入XY-C1官方机型配置
         run: |
-          cd padavan/trunk
+          cd /opt/rt-n56u/trunk
           cp configs/templates/XY-C1.config .config
 
       - name: 按官方规范集成mwan3helper插件
         run: |
-          cd padavan/trunk
-          # 复制插件网页、系统配置、主程序（仓库真实存在的3个目录）
-          cp -rf $GITHUB_WORKSPACE/mwan3helper/files/www ./
-          cp -rf $GITHUB_WORKSPACE/mwan3helper/files/etc ./
-          cp -rf $GITHUB_WORKSPACE/mwan3helper/files/sbin ./
-          
-          # 官方user插件目录注册编译
+          cd /opt/rt-n56u/trunk
+          # 只需要复制到user目录注册编译即可，无需重复复制到根目录
           mkdir -p user/mwan3helper
           cp -rf $GITHUB_WORKSPACE/mwan3helper/* user/mwan3helper/
           echo "obj-y += mwan3helper/" >> user/Makefile
@@ -38,7 +42,7 @@ jobs:
 
       - name: 按你的需求修改固件开关
         run: |
-          cd padavan/trunk
+          cd /opt/rt-n56u/trunk
           # 1. 完全关闭USB功能
           sed -i 's/CONFIG_FIRMWARE_ENABLE_USB=y/CONFIG_FIRMWARE_ENABLE_USB=n/' .config
           sed -i 's/CONFIG_FIRMWARE_ENABLE_USB_EXT=y/CONFIG_FIRMWARE_ENABLE_USB_EXT=n/' .config
@@ -51,7 +55,7 @@ jobs:
 
       - name: 官方标准清理+编译固件
         run: |
-          cd padavan/trunk
+          cd /opt/rt-n56u/trunk
           ./clear_tree
           ./build_firmware.sh
 
@@ -59,4 +63,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: XY-C1-Padavan-mwan3-ipv6
-          path: /home/runner/work/padavan/padavan/padavan/trunk/images/*.trx
+          path: /opt/rt-n56u/trunk/images/*.trx
