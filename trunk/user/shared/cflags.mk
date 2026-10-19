@@ -266,3 +266,14 @@ ifeq ($(CONFIG_32M_REBOOT_FIXUP),y)
 CFLAGS += -DMTD_FLASH_32M_REBOOT_BUG
 endif
 
+### Build-time override of default LAN IP (see configs/templates/*.config)
+ifneq ($(CONFIG_FIRMWARE_LAN_IP),)
+CFLAGS += -DDEF_LAN_ADDR=\"$(CONFIG_FIRMWARE_LAN_IP)\"
+endif
+ifneq ($(CONFIG_FIRMWARE_LAN_IP_BEG),)
+CFLAGS += -DDEF_LAN_DHCP_BEG=\"$(CONFIG_FIRMWARE_LAN_IP_BEG)\"
+endif
+ifneq ($(CONFIG_FIRMWARE_LAN_IP_END),)
+CFLAGS += -DDEF_LAN_DHCP_END=\"$(CONFIG_FIRMWARE_LAN_IP_END)\"
+endif
+
