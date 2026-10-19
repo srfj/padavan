@@ -553,6 +553,11 @@ void stop_dnsforwarder(void);
 void start_dnsforwarder(void);
 void restart_dnsforwarder(void);
 #endif
+#if defined(APP_ROUTEFLOW)
+void stop_routeflow(void);
+void start_routeflow(void);
+void restart_routeflow(void);
+#endif
 
 /* services_ex.c */
 int fill_dnsmasq_servers(void);

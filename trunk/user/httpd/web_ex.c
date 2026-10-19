@@ -2054,6 +2054,94 @@ static int dnsforwarder_status_hook(int eid, webs_t wp, int argc, char **argv)
 }
 #endif
 
+#if defined(APP_ROUTEFLOW)
+static int routeflow_status_hook(int eid, webs_t wp, int argc, char **argv)
+{
+	int status_code = 0;
+	char count[16] = "0";
+	FILE *f;
+
+	if ((f = fopen("/tmp/routeflow.run", "r")) != NULL) {
+		status_code = 1;
+		fclose(f);
+	}
+
+	f = fopen("/etc/storage/routeflow/gfwlist.txt", "r");
+	if (f) {
+		char line[256];
+		int n = 0;
+		while (fgets(line, sizeof(line), f)) {
+			char *p = line;
+			while (*p == ' ' || *p == '\t')
+				p++;
+			if (*p == '\0' || *p == '\n' || *p == '\r' || *p == '#')
+				continue;
+			n++;
+		}
+		fclose(f);
+		snprintf(count, sizeof(count), "%d", n);
+	}
+
+	websWrite(wp, "function routeflow_status() { return %d;}\n", status_code);
+	websWrite(wp, "function routeflow_gfw_count() { return '%s';}\n", count);
+	return 0;
+}
+
+static int routeflow_gfwlist_hook(int eid, webs_t wp, int argc, char **argv)
+{
+	FILE *f = fopen("/etc/storage/routeflow/gfwlist.txt", "r");
+	if (f) {
+		char line[512];
+		while (fgets(line, sizeof(line), f)) {
+			char *p = line;
+			while (*p) {
+				if (*p == '<')
+					fputs("&lt;", wp);
+				else if (*p == '>')
+					fputs("&gt;", wp);
+				else if (*p == '&')
+					fputs("&amp;", wp);
+				else
+					fputc(*p, wp);
+				p++;
+			}
+		}
+		fclose(f);
+	}
+	fflush(wp);
+	return 0;
+}
+
+static int routeflow_action_hook(int eid, webs_t wp, int argc, char **argv)
+{
+	char *action = websGetVar(wp, "routeflow_action", "");
+
+	if (!strcmp(action, "save_gfwlist")) {
+		char *data = websGetVar(wp, "routeflow_gfwlist", "");
+		struct stat st;
+		FILE *f;
+
+		if (stat("/etc/storage/routeflow", &st) != 0)
+			mkdir("/etc/storage/routeflow", 0755);
+
+		f = fopen("/etc/storage/routeflow/gfwlist.txt", "w");
+		if (f) {
+			fputs(data, f);
+			if (data[0] != '\0' && data[strlen(data) - 1] != '\n')
+				fputc('\n', f);
+			fclose(f);
+		}
+		system("/sbin/mtd_storage.sh save >/dev/null 2>&1 &");
+		notify_rc(RCN_RESTART_ROUTEFLOW);
+	} else if (!strcmp(action, "restart")) {
+		notify_rc(RCN_RESTART_ROUTEFLOW);
+	}
+
+	websWrite(wp, "parent.location.href=\"/routeflow.asp\";\n");
+	return 0;
+}
+#endif
+
 static int
 ej_detect_internet_hook(int eid, webs_t wp, int argc, char **argv)
 {
@@ -2243,6 +2331,11 @@ ej_firmware_caps_hook(int eid, webs_t wp, int argc, char **argv)
 #else
 	int found_app_dnsforwarder = 0;
 #endif
+#if defined(APP_ROUTEFLOW)
+	int found_app_routeflow = 1;
+#else
+	int found_app_routeflow = 0;
+#endif
 #if defined(APP_XUPNPD)
 	int found_app_xupnpd = 1;
 #else
@@ -2415,7 +2508,8 @@ ej_firmware_caps_hook(int eid, webs_t wp, int argc, char **argv)
 		"function found_app_dnsforwarder() { return %d;}\n"
 		"function found_app_shadowsocks() { return %d;}\n"
 		"function found_app_xupnpd() { return %d;}\n"
-		"function found_app_mentohust() { return %d;}\n",
+		"function found_app_mentohust() { return %d;}\n"
+		"function found_app_routeflow() { return %d;}\n",
 		found_utl_hdparm,
 		found_app_ovpn,
 		found_app_dlna,
@@ -2437,7 +2531,8 @@ ej_firmware_caps_hook(int eid, webs_t wp, int argc, char **argv)
 		found_app_dnsforwarder,
 		found_app_shadowsocks,
 		found_app_xupnpd,
-		found_app_mentohust
+		found_app_mentohust,
+		found_app_routeflow
 	);
 
 	websWrite(wp,
@@ -3705,6 +3800,20 @@ do_restore_st_cgi(const char *url, FILE *stream)
 	}
 }
 
+#if defined(APP_ROUTEFLOW)
+static void
+do_routeflow_upload_cgi(const char *url, FILE *stream)
+{
+	if (get_login_safe()) {
+		doSystem("/sbin/mtd_storage.sh save >/dev/null 2>&1 &");
+		notify_rc(RCN_RESTART_ROUTEFLOW);
+	}
+	fprintf(stream, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html\">"
+		"<script>parent.location.href='/routeflow.asp';</script></head><body></body></html>\n");
+	fflush(stream);
+}
+#endif
+
 static void
 do_nvram_file(const char *url, FILE *stream)
 {
@@ -3850,6 +3959,9 @@ struct mime_handler mime_handlers[] = {
 	{ "upgrade.cgi*",    "text/html", no_cache_IE, do_upgrade_fw_post, do_upgrade_fw_cgi, 1 },
 	{ "restore_nv.cgi*", "text/html", no_cache_IE, do_restore_nv_post, do_restore_nv_cgi, 1 },
 	{ "restore_st.cgi*", "text/html", no_cache_IE, do_restore_st_post, do_restore_st_cgi, 1 },
+#if defined(APP_ROUTEFLOW)
+	{ "routeflow_upload.cgi*", "text/html", no_cache_IE, do_routeflow_upload_post, do_routeflow_upload_cgi, 1 },
+#endif
 
 	{ NULL, NULL, NULL, NULL, NULL, 0 }
 };
@@ -4145,6 +4257,11 @@ struct ej_handler ej_handlers[] =
 #endif
 #if defined (APP_DNSFORWARDER)
 	{ "dnsforwarder_status", dnsforwarder_status_hook},
+#endif
+#if defined (APP_ROUTEFLOW)
+	{ "routeflow_status", routeflow_status_hook},
+	{ "routeflow_gfwlist", routeflow_gfwlist_hook},
+	{ "routeflow_action", routeflow_action_hook},
 #endif
 	{ "openssl_util_hook", openssl_util_hook},
 	{ "openvpn_srv_cert_hook", openvpn_srv_cert_hook},

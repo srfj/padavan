@@ -202,6 +202,9 @@ extern int fill_eth_status(int port_id_uapi, webs_t wp);
 extern void do_upgrade_fw_post(const char *url, FILE *stream, int clen, char *boundary);
 extern void do_restore_nv_post(const char *url, FILE *stream, int clen, char *boundary);
 extern void do_restore_st_post(const char *url, FILE *stream, int clen, char *boundary);
+#if defined(APP_ROUTEFLOW)
+extern void do_routeflow_upload_post(const char *url, FILE *stream, int clen, char *boundary);
+#endif
 
 // web_ex.c
 extern void nvram_commit_safe(void);

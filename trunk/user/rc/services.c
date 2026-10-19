@@ -381,6 +381,23 @@ void restart_dnsforwarder(void){
 }
 #endif
 
+#if defined(APP_ROUTEFLOW)
+void stop_routeflow(void){
+	eval("/usr/bin/routeflow.sh","stop");
+}
+
+void start_routeflow(void){
+	int routeflow_mode = nvram_get_int("routeflow_enable");
+	if (routeflow_mode == 1)
+		eval("/usr/bin/routeflow.sh","start");
+}
+
+void restart_routeflow(void){
+	stop_routeflow();
+	start_routeflow();
+}
+#endif
+
 #if defined(APP_NAPT66)
 void start_napt66(void){
 	int napt66_mode = nvram_get_int("napt66_enable");
@@ -604,6 +621,9 @@ start_services_once(int is_ap_mode)
 #endif
 #if defined(APP_DNSFORWARDER)
 	start_dnsforwarder();
+#endif
+#if defined(APP_ROUTEFLOW)
+	start_routeflow();
 #endif
 #if defined(APP_SHADOWSOCKS)
 	start_ss();

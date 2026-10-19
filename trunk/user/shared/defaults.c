@@ -554,6 +554,14 @@ struct nvram_pair router_defaults[] = {
 	{ "dns_forwarder_server", "8.8.4.4:53" },
 #endif
 
+#if defined(APP_ROUTEFLOW)
+	/* routeflow */
+	{ "routeflow_enable", "0" },
+	{ "routeflow_gateway", "" },
+	{ "routeflow_dns_enable", "0" },
+	{ "routeflow_dns", "8.8.8.8" },
+#endif
+
 #if defined(APP_SHADOWSOCKS)
 	/* shadowsocks */
 	{ "ss_type", "0" }, //0=ss, 1=ssr

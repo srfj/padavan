@@ -835,6 +835,16 @@
 	};
 #endif
 
+#if defined(APP_ROUTEFLOW)
+	struct variable variables_routeflowConf[] = {
+			{"routeflow_enable", "", NULL, EVM_RESTART_ROUTEFLOW},
+			{"routeflow_gateway", "", NULL, EVM_RESTART_ROUTEFLOW},
+			{"routeflow_dns_enable", "", NULL, EVM_RESTART_ROUTEFLOW},
+			{"routeflow_dns", "", NULL, EVM_RESTART_ROUTEFLOW},
+			{0,0,0,0}
+	};
+#endif
+
 #if defined(APP_SHADOWSOCKS)
 	struct variable variables_ShadowsocksConf[] = {
 			{"ss_enable","",NULL, EVM_RESTART_SHADOWSOCKS},
@@ -976,6 +986,9 @@
 #if defined(APP_DNSFORWARDER)
 		{"dnsforwarderConf",		variables_dnsforwarderConf},
 #endif
+#if defined(APP_ROUTEFLOW)
+		{"routeflowConf",		variables_routeflowConf},
+#endif
 #if defined(APP_SCUT)
 		{"ScutclientConf",		variables_ScutclientConf},
 #endif
@@ -1063,6 +1076,9 @@
 #endif
 #if defined(APP_DNSFORWARDER)
 		{EVM_RESTART_DNSFORWARDER,	EVT_RESTART_DNSFORWARDER,	RCN_RESTART_DNSFORWARDER, 0},
+#endif
+#if defined(APP_ROUTEFLOW)
+		{EVM_RESTART_ROUTEFLOW,		EVT_RESTART_ROUTEFLOW,		RCN_RESTART_ROUTEFLOW, 0},
 #endif
 #if defined(APP_SHADOWSOCKS)
 		{EVM_RESTART_SHADOWSOCKS,	EVT_RESTART_SHADOWSOCKS,	RCN_RESTART_SHADOWSOCKS,  0},

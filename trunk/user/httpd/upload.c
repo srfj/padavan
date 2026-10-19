@@ -358,3 +358,24 @@ do_restore_st_post(const char *url, FILE *stream, int clen, char *boundary)
 	snprintf(bndr, sizeof(bndr), "\r\n--%s", boundary);
 	do_upload_file(stream, clen, bndr, upload_file, "file_st", check_header_bz2, 10);
 }
+
+#if defined(APP_ROUTEFLOW)
+static int
+check_header_gfwlist(const char *buf, long *file_len)
+{
+	/* 纯文本 GWF 列表，不做头部校验，长度由 multipart 边界界定 */
+	return 0;
+}
+
+void
+do_routeflow_upload_post(const char *url, FILE *stream, int clen, char *boundary)
+{
+	char bndr[128];
+
+	mkdir("/etc/storage/routeflow", 0755);
+
+	/* 与 storage restore 相同：由 multipart 边界标记界定文件结尾 */
+	snprintf(bndr, sizeof(bndr), "\r\n--%s", boundary);
+	do_upload_file(stream, clen, bndr, "/etc/storage/routeflow/gfwlist.txt", "routeflow_file", check_header_gfwlist, 1);
+}
+#endif

@@ -1,0 +1,4 @@
+# RouteFlow GWF 列表（每行一个域名，# 开头为注释）
+000webhost.com
+030buy.com
+0rz.tw
