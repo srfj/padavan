@@ -1325,6 +1325,12 @@ handle_notifications(void)
 			restart_routeflow();
 		}
 #endif
+#if defined(APP_SOFTCENTER)
+		else if (strcmp(entry->d_name, RCN_RESTART_SOFTCENTER) == 0)
+		{
+			restart_softcenter();
+		}
+#endif
 #if defined(APP_SMBD) || defined(APP_NMBD)
 		else if (strcmp(entry->d_name, RCN_RESTART_NMBD) == 0)
 		{

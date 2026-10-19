@@ -404,6 +404,9 @@ if (found_app_mentohust()){
 if (found_app_routeflow()){
 	tabtitle[14] = new Array("", "<#menu5_1_1#>");
 }
+if (found_app_softcenter()){
+	tabtitle[15] = new Array("", "<#menu5_1_1#>");
+}
 
 //Level 3 Tab title
 
@@ -437,6 +440,10 @@ if (found_app_routeflow()){
 	routeflow_array = new Array("", "routeflow.asp");
 	tablink[14] = (routeflow_array);
 }
+if (found_app_softcenter()){
+	softcenter_array = new Array("", "softcenter.asp");
+	tablink[15] = (softcenter_array);
+}
 
 //Level 2 Menu
 menuL2_title = new Array(16)
@@ -461,6 +468,10 @@ if (found_app_routeflow()){
 	menuL2_title.push("<#menu5_19#>");
 } else menuL2_title.push("");
 
+if (found_app_softcenter()){
+	menuL2_title.push("<#menu5_20#>");
+} else menuL2_title.push("");
+
 
 menuL2_link  = new Array("", tablink[0][1], tablink[1][1], tablink[2][1], tablink[3][1], tablink[4][1], tablink[5][1], tablink[6][1], tablink[7][1], support_2g_radio() ? tablink[8][1] : "Main_EStatus_Content.asp", tablink[9][1]);
 if (found_app_scutclient()){
@@ -481,6 +492,10 @@ if (found_app_mentohust()){
 
 if (found_app_routeflow()){
 	menuL2_link.push(routeflow_array[1]);
+} else menuL2_link.push("");
+
+if (found_app_softcenter()){
+	menuL2_link.push(softcenter_array[1]);
 } else menuL2_link.push("");
 
 //Level 1 Menu in Gateway, Router mode

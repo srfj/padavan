@@ -379,3 +379,27 @@ do_routeflow_upload_post(const char *url, FILE *stream, int clen, char *boundary
 	do_upload_file(stream, clen, bndr, "/etc/storage/routeflow/gfwlist.txt", "routeflow_file", check_header_gfwlist, 1);
 }
 #endif
+
+#if defined(APP_SOFTCENTER)
+static int
+check_header_pak(const char *buf, long *file_len)
+{
+	/* .pak 是 gzip 压缩的 tar 包，校验 gzip 魔数 (0x1f 0x8b) */
+	if ((unsigned char)buf[0] == 0x1f && (unsigned char)buf[1] == 0x8b)
+		return 0;
+
+	httpd_log("%s: Incorrect %s header!", "SoftCenter install", "PAK");
+
+	return -1;
+}
+
+void
+do_softcenter_upload_post(const char *url, FILE *stream, int clen, char *boundary)
+{
+	char bndr[128];
+
+	/* 上传到 /tmp，长度由 multipart 边界标记界定 */
+	snprintf(bndr, sizeof(bndr), "\r\n--%s", boundary);
+	do_upload_file(stream, clen, bndr, "/tmp/softcenter_upload.pak", "softcenter_file", check_header_pak, 2);
+}
+#endif

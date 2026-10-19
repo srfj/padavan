@@ -198,6 +198,10 @@ ifneq ($(CONFIG_FIRMWARE_INCLUDE_ROUTEFLOW),y)
 	rm -f $(INSTALLDIR)/www/routeflow.asp
 	rm -f $(INSTALLDIR)/www/routeflow_action.asp
 endif
+ifneq ($(CONFIG_FIRMWARE_INCLUDE_SOFTCENTER),y)
+	rm -f $(INSTALLDIR)/www/softcenter.asp
+	rm -f $(INSTALLDIR)/www/softcenter_action.asp
+endif
 ifneq ($(CONFIG_FIRMWARE_INCLUDE_SHADOWSOCKS),y)
 	rm -f $(INSTALLDIR)/www/Shadowsocks.asp
 	rm -f $(INSTALLDIR)/www/Shadowsocks_action.asp

@@ -398,6 +398,21 @@ void restart_routeflow(void){
 }
 #endif
 
+#if defined(APP_SOFTCENTER)
+void stop_softcenter(void){
+	eval("/usr/bin/softcenter.sh","stop");
+}
+
+void start_softcenter(void){
+	eval("/usr/bin/softcenter.sh","start");
+}
+
+void restart_softcenter(void){
+	stop_softcenter();
+	start_softcenter();
+}
+#endif
+
 #if defined(APP_NAPT66)
 void start_napt66(void){
 	int napt66_mode = nvram_get_int("napt66_enable");
@@ -624,6 +639,9 @@ start_services_once(int is_ap_mode)
 #endif
 #if defined(APP_ROUTEFLOW)
 	start_routeflow();
+#endif
+#if defined(APP_SOFTCENTER)
+	start_softcenter();
 #endif
 #if defined(APP_SHADOWSOCKS)
 	start_ss();
