@@ -562,11 +562,6 @@ struct nvram_pair router_defaults[] = {
 	{ "routeflow_dns", "8.8.8.8" },
 #endif
 
-#if defined(APP_SOFTCENTER)
-	/* softcenter */
-	{ "softcenter_list", "" },
-#endif
-
 #if defined(APP_SHADOWSOCKS)
 	/* shadowsocks */
 	{ "ss_type", "0" }, //0=ss, 1=ssr

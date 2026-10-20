@@ -2379,113 +2379,6 @@ static int routeflow_action_hook(int eid, webs_t wp, int argc, char **argv)
 }
 #endif
 
-#if defined(APP_SOFTCENTER)
-#define SC_PLUGIN_DIR	"/etc/storage/softcenter/plugins"
-
-/* 读取插件 control 文件中指定 key 的值 */
-static void
-sc_read_ctl(const char *name, const char *key, char *out, int outlen)
-{
-	char path[256], line[256];
-	FILE *f;
-	int klen = strlen(key);
-
-	out[0] = '\0';
-	snprintf(path, sizeof(path), SC_PLUGIN_DIR "/%s/control", name);
-	if (!(f = fopen(path, "r")))
-		return;
-
-	while (fgets(line, sizeof(line), f)) {
-		char *p = line;
-		int n;
-		while (*p == ' ' || *p == '\t')
-			p++;
-		if (strncmp(p, key, klen) != 0 || p[klen] != '=')
-			continue;
-		p += klen + 1;
-		n = strlen(p);
-		while (n > 0 && (p[n - 1] == '\n' || p[n - 1] == '\r'))
-			p[--n] = '\0';
-		snprintf(out, outlen, "%s", p);
-		break;
-	}
-	fclose(f);
-}
-
-/* 转义为 JavaScript 单引号字符串内容 */
-static void
-sc_js_escape(FILE *stream, const char *s)
-{
-	for (; *s; s++) {
-		if (*s == '\\' || *s == '\'' || *s == '"')
-			fprintf(stream, "\\%c", *s);
-		else if (*s == '\n' || *s == '\r')
-			fputc(' ', stream);
-		else
-			fputc(*s, stream);
-	}
-}
-
-static int
-softcenter_status_hook(int eid, webs_t wp, int argc, char **argv)
-{
-	char *dup = strdup(nvram_safe_get("softcenter_list"));
-	int count = 0;
-	char *p;
-
-	if (dup) {
-		for (p = strtok(dup, " "); p; p = strtok(NULL, " "))
-			count++;
-		free(dup);
-	}
-
-	websWrite(wp, "function softcenter_count() { return %d;}\n", count);
-	return 0;
-}
-
-static int
-softcenter_plugins_hook(int eid, webs_t wp, int argc, char **argv)
-{
-	char *dup = strdup(nvram_safe_get("softcenter_list"));
-	char *p;
-	int first = 1;
-
-	websWrite(wp, "function softcenter_plugins() { return [");
-	if (dup) {
-		for (p = strtok(dup, " "); p; p = strtok(NULL, " ")) {
-			char ver[64], desc[192];
-			sc_read_ctl(p, "version", ver, sizeof(ver));
-			sc_read_ctl(p, "description", desc, sizeof(desc));
-			websWrite(wp, "%s['", first ? "" : ",");
-			sc_js_escape(wp, p);
-			websWrite(wp, "','");
-			sc_js_escape(wp, ver);
-			websWrite(wp, "','");
-			sc_js_escape(wp, desc);
-			websWrite(wp, "']");
-			first = 0;
-		}
-		free(dup);
-	}
-	websWrite(wp, "];}\n");
-	return 0;
-}
-
-static int
-softcenter_action_hook(int eid, webs_t wp, int argc, char **argv)
-{
-	char *action = websGetVar(wp, "softcenter_action", "");
-
-	if (!strcmp(action, "remove")) {
-		char *name = websGetVar(wp, "softcenter_name", "");
-		if (name[0] != '\0' && get_login_safe())
-			eval("/usr/bin/softcenter.sh", "remove", name);
-	}
-
-	websWrite(wp, "parent.location.href=\"/softcenter.asp\";\n");
-	return 0;
-}
-#endif
 
 static int
 ej_detect_internet_hook(int eid, webs_t wp, int argc, char **argv)
@@ -2681,11 +2574,6 @@ ej_firmware_caps_hook(int eid, webs_t wp, int argc, char **argv)
 #else
 	int found_app_routeflow = 0;
 #endif
-#if defined(APP_SOFTCENTER)
-	int found_app_softcenter = 1;
-#else
-	int found_app_softcenter = 0;
-#endif
 #if defined(APP_XUPNPD)
 	int found_app_xupnpd = 1;
 #else
@@ -2859,8 +2747,7 @@ ej_firmware_caps_hook(int eid, webs_t wp, int argc, char **argv)
 		"function found_app_shadowsocks() { return %d;}\n"
 		"function found_app_xupnpd() { return %d;}\n"
 		"function found_app_mentohust() { return %d;}\n"
-		"function found_app_routeflow() { return %d;}\n"
-		"function found_app_softcenter() { return %d;}\n",
+		"function found_app_routeflow() { return %d;}\n",
 		found_utl_hdparm,
 		found_app_ovpn,
 		found_app_dlna,
@@ -2883,8 +2770,7 @@ ej_firmware_caps_hook(int eid, webs_t wp, int argc, char **argv)
 		found_app_shadowsocks,
 		found_app_xupnpd,
 		found_app_mentohust,
-		found_app_routeflow,
-		found_app_softcenter
+		found_app_routeflow
 	);
 
 	websWrite(wp,
@@ -4166,50 +4052,6 @@ do_routeflow_upload_cgi(const char *url, FILE *stream)
 }
 #endif
 
-#if defined(APP_SOFTCENTER)
-/* 将结果字符串转义为 JavaScript alert 可用的内容 */
-static void
-sc_alert_escape(FILE *stream, const char *s)
-{
-	for (; *s; s++) {
-		if (*s == '\\' || *s == '\'')
-			fprintf(stream, "\\%c", *s);
-		else if (*s == '\n' || *s == '\r')
-			fputc(' ', stream);
-		else
-			fputc(*s, stream);
-	}
-}
-
-static void
-do_softcenter_upload_cgi(const char *url, FILE *stream)
-{
-	char result[256] = "";
-
-	if (get_login_safe()) {
-		FILE *f;
-		size_t n;
-
-		unlink("/tmp/softcenter.result");
-		doSystem("/usr/bin/softcenter.sh install /tmp/softcenter_upload.pak"
-			" >/tmp/softcenter.result 2>&1");
-		unlink("/tmp/softcenter_upload.pak");
-
-		if ((f = fopen("/tmp/softcenter.result", "r")) != NULL) {
-			n = fread(result, 1, sizeof(result) - 1, f);
-			result[n] = '\0';
-			fclose(f);
-		}
-	}
-
-	fprintf(stream, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"
-		"<script>alert('");
-	sc_alert_escape(stream, result);
-	fprintf(stream, "');parent.location.href='/softcenter.asp';</script></head><body></body></html>\n");
-	fflush(stream);
-}
-#endif
-
 static void
 do_nvram_file(const char *url, FILE *stream)
 {
@@ -4357,9 +4199,6 @@ struct mime_handler mime_handlers[] = {
 	{ "restore_st.cgi*", "text/html", no_cache_IE, do_restore_st_post, do_restore_st_cgi, 1 },
 #if defined(APP_ROUTEFLOW)
 	{ "routeflow_upload.cgi*", "text/html", no_cache_IE, do_routeflow_upload_post, do_routeflow_upload_cgi, 1 },
-#endif
-#if defined(APP_SOFTCENTER)
-	{ "softcenter_upload.cgi*", "text/html", no_cache_IE, do_softcenter_upload_post, do_softcenter_upload_cgi, 1 },
 #endif
 
 	{ NULL, NULL, NULL, NULL, NULL, 0 }
@@ -4662,11 +4501,6 @@ struct ej_handler ej_handlers[] =
 	{ "routeflow_gfw_state", routeflow_gfw_state_hook},
 	{ "routeflow_gfw_rows", routeflow_gfw_rows_hook},
 	{ "routeflow_action", routeflow_action_hook},
-#endif
-#if defined (APP_SOFTCENTER)
-	{ "softcenter_status", softcenter_status_hook},
-	{ "softcenter_plugins", softcenter_plugins_hook},
-	{ "softcenter_action", softcenter_action_hook},
 #endif
 	{ "openssl_util_hook", openssl_util_hook},
 	{ "openvpn_srv_cert_hook", openvpn_srv_cert_hook},

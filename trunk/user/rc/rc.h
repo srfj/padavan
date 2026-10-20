@@ -558,11 +558,6 @@ void stop_routeflow(void);
 void start_routeflow(void);
 void restart_routeflow(void);
 #endif
-#if defined(APP_SOFTCENTER)
-void stop_softcenter(void);
-void start_softcenter(void);
-void restart_softcenter(void);
-#endif
 
 /* services_ex.c */
 int fill_dnsmasq_servers(void);

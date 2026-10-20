@@ -205,9 +205,6 @@ extern void do_restore_st_post(const char *url, FILE *stream, int clen, char *bo
 #if defined(APP_ROUTEFLOW)
 extern void do_routeflow_upload_post(const char *url, FILE *stream, int clen, char *boundary);
 #endif
-#if defined(APP_SOFTCENTER)
-extern void do_softcenter_upload_post(const char *url, FILE *stream, int clen, char *boundary);
-#endif
 
 // web_ex.c
 extern void nvram_commit_safe(void);
