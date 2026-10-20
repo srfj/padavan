@@ -240,6 +240,7 @@ function enterKey(ev, fn){
                             <h2 class="box_head round_top"><#menu5_19#></h2>
                             <div class="round_bottom">
                                 <div class="row-fluid">
+                                    <div id="tabMenu" class="submenuBlock"></div>
                                     <ul id="tabs" class="nav nav-tabs">
                                         <li id="li_gen" class="active"><a href="javascript:void(0)" onclick="switchTab('gen');return false;"><#menu5_1_1#></a></li>
                                         <li id="li_gfw"><a href="javascript:void(0)" onclick="switchTab('gfw');return false;"><#menu5_19_5#></a></li>
