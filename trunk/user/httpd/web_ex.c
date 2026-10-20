@@ -2087,57 +2087,283 @@ static int routeflow_status_hook(int eid, webs_t wp, int argc, char **argv)
 	return 0;
 }
 
-static int routeflow_gfwlist_hook(int eid, webs_t wp, int argc, char **argv)
+#define RTF_DIR		"/etc/storage/routeflow"
+#define RTF_LIST	RTF_DIR "/gfwlist.txt"
+#define RTF_TMP		RTF_DIR "/gfwlist.tmp"
+#define RTF_DEF_LIST	"/etc_ro/routeflow/gfwlist.txt"
+#define RTF_MAX_ROWS	1000
+
+/* 去掉字符串首尾的空白与换行 */
+static void
+rtf_trim(char *s)
 {
-	FILE *f = fopen("/etc/storage/routeflow/gfwlist.txt", "r");
-	if (f) {
-		char line[512];
+	char *p = s;
+	size_t n;
+
+	while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n')
+		p++;
+	if (p != s)
+		memmove(s, p, strlen(p) + 1);
+
+	n = strlen(s);
+	while (n > 0 && (s[n-1] == ' ' || s[n-1] == '\t' || s[n-1] == '\r' || s[n-1] == '\n'))
+		s[--n] = '\0';
+}
+
+/* 不区分大小写的子串查找 */
+static char *
+rtf_stristr(const char *hay, const char *needle)
+{
+	if (!*needle)
+		return (char *)hay;
+	for (; *hay; hay++) {
+		const char *h = hay, *n = needle;
+		while (*h && *n && tolower((unsigned char)*h) == tolower((unsigned char)*n)) {
+			h++;
+			n++;
+		}
+		if (!*n)
+			return (char *)hay;
+	}
+	return NULL;
+}
+
+/* 转为 JavaScript 单引号字符串内容 */
+static void
+rtf_js_escape(webs_t wp, const char *s)
+{
+	for (; *s; s++) {
+		if (*s == '\\' || *s == '\'' || *s == '"')
+			websWrite(wp, "\\%c", *s);
+		else if (*s == '\n' || *s == '\r' || *s == '\t')
+			websWrite(wp, " ");
+		else
+			websWrite(wp, "%c", *s);
+	}
+}
+
+/* 输出 URL 编码字符串 */
+static void
+rtf_url_encode(webs_t wp, const char *s)
+{
+	static const char hex[] = "0123456789ABCDEF";
+	unsigned char c;
+
+	for (; *s; s++) {
+		c = (unsigned char)*s;
+		if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~')
+			websWrite(wp, "%c", c);
+		else
+			websWrite(wp, "%%%c%c", hex[c >> 4], hex[c & 0xF]);
+	}
+}
+
+/* 首次使用时用出厂默认列表初始化 gfwlist.txt */
+static void
+rtf_seed_list(void)
+{
+	struct stat st;
+	FILE *in, *out;
+	char line[512];
+
+	if (stat(RTF_LIST, &st) == 0)
+		return;
+
+	mkdir(RTF_DIR, 0755);
+
+	in = fopen(RTF_DEF_LIST, "r");
+	out = fopen(RTF_LIST, "w");
+	if (out) {
+		if (in) {
+			while (fgets(line, sizeof(line), in))
+				fputs(line, out);
+			fclose(in);
+		}
+		fclose(out);
+	}
+}
+
+/* 添加单个域名，成功返回 1 */
+static int
+rtf_list_add(const char *domain)
+{
+	char d[256], line[512];
+	FILE *f;
+
+	if (!domain || !*domain)
+		return 0;
+	snprintf(d, sizeof(d), "%s", domain);
+	rtf_trim(d);
+	if (!d[0] || d[0] == '#')
+		return 0;
+
+	rtf_seed_list();
+
+	if ((f = fopen(RTF_LIST, "r"))) {
 		while (fgets(line, sizeof(line), f)) {
-			char *p = line;
-			while (*p) {
-				if (*p == '<')
-					fputs("&lt;", wp);
-				else if (*p == '>')
-					fputs("&gt;", wp);
-				else if (*p == '&')
-					fputs("&amp;", wp);
-				else
-					fputc(*p, wp);
-				p++;
+			rtf_trim(line);
+			if (strcasecmp(line, d) == 0) {
+				fclose(f);
+				return 0;
 			}
 		}
 		fclose(f);
 	}
-	fflush(wp);
+
+	if (!(f = fopen(RTF_LIST, "a")))
+		return 0;
+	fprintf(f, "%s\n", d);
+	fclose(f);
+	return 1;
+}
+
+/* 修改域名 (oldd -> newd)，成功返回 1 */
+static int
+rtf_list_edit(const char *oldd, const char *newd)
+{
+	char o[256], n[256], line[512];
+	FILE *in, *out;
+	int ok = 0;
+
+	if (!oldd || !*oldd || !newd || !*newd)
+		return 0;
+	snprintf(o, sizeof(o), "%s", oldd);
+	snprintf(n, sizeof(n), "%s", newd);
+	rtf_trim(o);
+	rtf_trim(n);
+	if (!o[0] || !n[0] || strcmp(o, n) == 0)
+		return 0;
+
+	if (!(in = fopen(RTF_LIST, "r")))
+		return 0;
+	if (!(out = fopen(RTF_TMP, "w"))) {
+		fclose(in);
+		return 0;
+	}
+
+	while (fgets(line, sizeof(line), in)) {
+		rtf_trim(line);
+		if (!line[0])
+			continue;
+		if (strcmp(line, o) == 0)
+			ok = 1;
+		fprintf(out, "%s\n", strcmp(line, o) == 0 ? n : line);
+	}
+	fclose(in);
+	fclose(out);
+
+	if (ok)
+		rename(RTF_TMP, RTF_LIST);
+	else
+		unlink(RTF_TMP);
+	return ok;
+}
+
+/* 删除单个域名，成功返回 1 */
+static int
+rtf_list_delete(const char *domain)
+{
+	char d[256], line[512];
+	FILE *in, *out;
+	int ok = 0;
+
+	if (!domain || !*domain)
+		return 0;
+	snprintf(d, sizeof(d), "%s", domain);
+	rtf_trim(d);
+	if (!d[0])
+		return 0;
+
+	if (!(in = fopen(RTF_LIST, "r")))
+		return 0;
+	if (!(out = fopen(RTF_TMP, "w"))) {
+		fclose(in);
+		return 0;
+	}
+
+	while (fgets(line, sizeof(line), in)) {
+		rtf_trim(line);
+		if (!line[0])
+			continue;
+		if (strcmp(line, d) == 0)
+			ok = 1;
+		else
+			fprintf(out, "%s\n", line);
+	}
+	fclose(in);
+	fclose(out);
+
+	if (ok)
+		rename(RTF_TMP, RTF_LIST);
+	else
+		unlink(RTF_TMP);
+	return ok;
+}
+
+/* 输出当前选项卡与搜索关键字到 JS 变量 */
+static int routeflow_gfw_state_hook(int eid, webs_t wp, int argc, char **argv)
+{
+	websWrite(wp, "var rtf_tab='");
+	rtf_js_escape(wp, websGetVar(wp, "rtf_tab", ""));
+	websWrite(wp, "';\nvar rtf_keyword='");
+	rtf_js_escape(wp, websGetVar(wp, "keyword", ""));
+	websWrite(wp, "';\n");
+	return 0;
+}
+
+/* 输出按关键字模糊匹配的域名列表 */
+static int routeflow_gfw_rows_hook(int eid, webs_t wp, int argc, char **argv)
+{
+	const char *kw = websGetVar(wp, "keyword", "");
+	FILE *f;
+	char line[512];
+	int shown = 0;
+
+	websWrite(wp, "function routeflow_gfw_rows() { return [");
+
+	if (kw && *kw && (f = fopen(RTF_LIST, "r"))) {
+		while (fgets(line, sizeof(line), f)) {
+			rtf_trim(line);
+			if (!line[0] || line[0] == '#')
+				continue;
+			if (!rtf_stristr(line, kw))
+				continue;
+			if (shown >= RTF_MAX_ROWS)
+				break;
+			websWrite(wp, "%s['", shown ? "," : "");
+			rtf_js_escape(wp, line);
+			websWrite(wp, "']");
+			shown++;
+		}
+		fclose(f);
+	}
+
+	websWrite(wp, "];}\n");
 	return 0;
 }
 
 static int routeflow_action_hook(int eid, webs_t wp, int argc, char **argv)
 {
 	char *action = websGetVar(wp, "routeflow_action", "");
+	int changed = 0;
 
-	if (!strcmp(action, "save_gfwlist")) {
-		char *data = websGetVar(wp, "routeflow_gfwlist", "");
-		struct stat st;
-		FILE *f;
+	if (!strcmp(action, "add"))
+		changed = rtf_list_add(websGetVar(wp, "routeflow_domain", ""));
+	else if (!strcmp(action, "edit"))
+		changed = rtf_list_edit(websGetVar(wp, "routeflow_old", ""),
+			websGetVar(wp, "routeflow_domain", ""));
+	else if (!strcmp(action, "delete"))
+		changed = rtf_list_delete(websGetVar(wp, "routeflow_old", ""));
 
-		if (stat("/etc/storage/routeflow", &st) != 0)
-			mkdir("/etc/storage/routeflow", 0755);
-
-		f = fopen("/etc/storage/routeflow/gfwlist.txt", "w");
-		if (f) {
-			fputs(data, f);
-			if (data[0] != '\0' && data[strlen(data) - 1] != '\n')
-				fputc('\n', f);
-			fclose(f);
-		}
-		system("/sbin/mtd_storage.sh save >/dev/null 2>&1 &");
-		notify_rc(RCN_RESTART_ROUTEFLOW);
-	} else if (!strcmp(action, "restart")) {
+	/* 变更后自动保存并重启服务 */
+	if (changed) {
+		doSystem("/sbin/mtd_storage.sh save >/dev/null 2>&1 &");
 		notify_rc(RCN_RESTART_ROUTEFLOW);
 	}
 
-	websWrite(wp, "parent.location.href=\"/routeflow.asp\";\n");
+	websWrite(wp, "parent.location.href=\"/routeflow.asp?rtf_tab=gfw&keyword=");
+	rtf_url_encode(wp, websGetVar(wp, "rtf_kw_back", ""));
+	websWrite(wp, "\";\n");
 	return 0;
 }
 #endif
@@ -4422,7 +4648,8 @@ struct ej_handler ej_handlers[] =
 #endif
 #if defined (APP_ROUTEFLOW)
 	{ "routeflow_status", routeflow_status_hook},
-	{ "routeflow_gfwlist", routeflow_gfwlist_hook},
+	{ "routeflow_gfw_state", routeflow_gfw_state_hook},
+	{ "routeflow_gfw_rows", routeflow_gfw_rows_hook},
 	{ "routeflow_action", routeflow_action_hook},
 #endif
 #if defined (APP_SOFTCENTER)

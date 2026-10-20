@@ -24,6 +24,8 @@
 <script>
 var $j = jQuery.noConflict();
 <% routeflow_status(); %>
+<% routeflow_gfw_state(); %>
+<% routeflow_gfw_rows(); %>
 
 $j(document).ready(function(){
 	init_itoggle('routeflow_enable');
@@ -36,6 +38,24 @@ function initial(){
 	show_footer();
 	fill_status(routeflow_status());
 	$("routeflow_gfw_count").innerHTML = routeflow_gfw_count();
+	$("rtf_kw").value = rtf_keyword;
+	renderRows();
+	if(rtf_tab == 'gfw' || rtf_keyword != '')
+		switchTab('gfw');
+}
+
+function switchTab(name){
+	if(name == 'gfw'){
+		$j("#li_gen").removeClass("active");
+		$j("#li_gfw").addClass("active");
+		$j("#tab_gen").hide();
+		$j("#tab_gfw").show();
+	}else{
+		$j("#li_gfw").removeClass("active");
+		$j("#li_gen").addClass("active");
+		$j("#tab_gfw").hide();
+		$j("#tab_gen").show();
+	}
 }
 
 function applyRule(){
@@ -55,20 +75,6 @@ function validForm(){
 	return true;
 }
 
-function saveGfwlist(){
-	showLoading();
-	document.gfwForm.routeflow_action.value = "save_gfwlist";
-	document.gfwForm.current_page.value = "routeflow.asp";
-	document.gfwForm.submit();
-}
-
-function restartRouteflow(){
-	showLoading();
-	document.gfwForm.routeflow_action.value = "restart";
-	document.gfwForm.current_page.value = "routeflow.asp";
-	document.gfwForm.submit();
-}
-
 function fill_status(status_code){
 	var stext = "Unknown";
 	if (status_code == 0)
@@ -78,6 +84,106 @@ function fill_status(status_code){
 	$("routeflow_status").innerHTML = '<span class="label label-' + (status_code != 0 ? 'success' : 'warning') + '">' + stext + '</span>';
 }
 
+function renderRows(){
+	var rows = routeflow_gfw_rows();
+	var tb = $("rtf_tbody");
+	tb.innerHTML = "";
+	if(rows.length == 0){
+		var tr = document.createElement("tr");
+		var td = document.createElement("td");
+		td.colSpan = 3;
+		td.style.textAlign = "center";
+		td.style.color = "#999";
+		td.innerHTML = (rtf_keyword == "") ? "<#menu5_19_18#>" : "<#menu5_19_23#>";
+		tr.appendChild(td);
+		tb.appendChild(tr);
+		return;
+	}
+	for(var i = 0; i < rows.length; i++){
+		var dom = rows[i][0];
+		var tr = document.createElement("tr");
+
+		var td1 = document.createElement("td");
+		td1.innerHTML = (i + 1);
+		tr.appendChild(td1);
+
+		var td2 = document.createElement("td");
+		var box = document.createElement("input");
+		box.type = "text";
+		box.className = "input";
+		box.style.width = "100%";
+		box.style.marginBottom = "0px";
+		box.value = dom;
+		td2.appendChild(box);
+		tr.appendChild(td2);
+
+		var td3 = document.createElement("td");
+		td3.style.whiteSpace = "nowrap";
+		var eb = document.createElement("input");
+		eb.type = "button";
+		eb.className = "btn btn-mini btn-primary";
+		eb.value = "<#CTL_modify#>";
+		eb.onclick = (function(orig, le){ return function(){ editDomain(orig, le); }; })(dom, box);
+		td3.appendChild(eb);
+		td3.appendChild(document.createTextNode(" "));
+		var db = document.createElement("input");
+		db.type = "button";
+		db.className = "btn btn-mini";
+		db.value = "<#CTL_del#>";
+		db.onclick = (function(orig){ return function(){ delDomain(orig); }; })(dom);
+		td3.appendChild(db);
+		tr.appendChild(td3);
+
+		tb.appendChild(tr);
+	}
+}
+
+function doSearch(){
+	var k = $("rtf_kw").value.replace(/^\s+|\s+$/g, "");
+	showLoading();
+	location.href = "/routeflow.asp?rtf_tab=gfw&keyword=" + encodeURIComponent(k);
+}
+
+function doReset(){
+	showLoading();
+	location.href = "/routeflow.asp?rtf_tab=gfw";
+}
+
+function submitAction(action, oldd, newd){
+	var f = document.gfwForm;
+	f.routeflow_action.value = action;
+	f.routeflow_old.value = oldd;
+	f.routeflow_domain.value = newd;
+	f.rtf_kw_back.value = rtf_keyword;
+	showLoading();
+	f.submit();
+}
+
+function addDomain(){
+	var v = $("rtf_add").value.replace(/^\s+|\s+$/g, "");
+	if(v == ""){ alert("<#menu5_19_22#>"); return; }
+	if(!confirm("<#menu5_19_20#>")) return;
+	submitAction("add", "", v);
+}
+
+function editDomain(orig, le){
+	var nv = le.value.replace(/^\s+|\s+$/g, "");
+	if(nv == ""){ alert("<#menu5_19_22#>"); le.value = orig; return; }
+	if(nv == orig) return;
+	if(!confirm("<#menu5_19_21#>")) return;
+	submitAction("edit", orig, nv);
+}
+
+function delDomain(orig){
+	if(!confirm("<#menu5_19_19#>")) return;
+	submitAction("delete", orig, "");
+}
+
+function enterKey(ev, fn){
+	ev = ev || window.event;
+	if(ev.keyCode == 13){ fn(); return false; }
+	return true;
+}
 </script>
 
 <style>
@@ -85,11 +191,12 @@ function fill_status(status_code){
     padding-right: 6px;
     padding-left: 6px;
 }
-textarea.gfwlist {
-	width: 100%;
-	height: 320px;
-	font-family: Consolas, Monaco, monospace;
-	font-size: 12px;
+.rtf_bar input[type="text"] {
+	margin-bottom: 0px;
+}
+#rtf_list_box {
+	max-height: 360px;
+	overflow: auto;
 }
 </style>
 </head>
@@ -109,15 +216,6 @@ textarea.gfwlist {
     <div id="Loading" class="popup_bg"></div>
 
     <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
-    <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
-
-    <input type="hidden" name="current_page" value="routeflow.asp">
-    <input type="hidden" name="next_page" value="">
-    <input type="hidden" name="next_host" value="">
-    <input type="hidden" name="sid_list" value="routeflowConf;">
-    <input type="hidden" name="group_id" value="">
-    <input type="hidden" name="action_mode" value="">
-    <input type="hidden" name="action_script" value="">
 
     <div class="container-fluid">
         <div class="row-fluid">
@@ -142,7 +240,22 @@ textarea.gfwlist {
                             <h2 class="box_head round_top"><#menu5_19#></h2>
                             <div class="round_bottom">
                                 <div class="row-fluid">
-                                    <div id="tabMenu" class="submenuBlock"></div>
+                                    <ul id="tabs" class="nav nav-tabs">
+                                        <li id="li_gen" class="active"><a href="javascript:void(0)" onclick="switchTab('gen');return false;"><#menu5_1_1#></a></li>
+                                        <li id="li_gfw"><a href="javascript:void(0)" onclick="switchTab('gfw');return false;"><#menu5_19_5#></a></li>
+                                    </ul>
+
+                                    <!-- ===== Tab: general settings ===== -->
+                                    <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
+                                    <input type="hidden" name="current_page" value="routeflow.asp">
+                                    <input type="hidden" name="next_page" value="">
+                                    <input type="hidden" name="next_host" value="">
+                                    <input type="hidden" name="sid_list" value="routeflowConf;">
+                                    <input type="hidden" name="group_id" value="">
+                                    <input type="hidden" name="action_mode" value="">
+                                    <input type="hidden" name="action_script" value="">
+
+                                    <div id="tab_gen">
                                     <table width="100%" cellpadding="4" cellspacing="0" class="table">
                                         <tr> <th><#running_status#></th>
                                             <td id="routeflow_status" colspan="3"></td>
@@ -194,76 +307,49 @@ textarea.gfwlist {
                                             </td>
                                         </tr>
                                     </table>
-                                </div>
-                            </div>
-                        </div>
+                                    </div>
+                                    </form>
 
-                        <div class="box well grad_colour_dark_blue">
-                            <h2 class="box_head round_top"><#menu5_19_5#></h2>
-                            <div class="round_bottom">
-                                <div class="row-fluid">
-                                    <table width="100%" cellpadding="4" cellspacing="0" class="table">
-                                        <tr> <th><#menu5_19_6#></th>
+                                    <!-- ===== Tab: GWF list ===== -->
+                                    <div id="tab_gfw" style="display:none">
+                                    <table width="100%" cellpadding="4" cellspacing="0" class="table rtf_bar">
+                                        <tr> <th width="30%"><#menu5_19_6#></th>
                                             <td><span id="routeflow_gfw_count">0</span></td>
                                         </tr>
+                                        <tr>
+                                            <td colspan="2">
+                                                <input type="text" id="rtf_add" class="input" size="24" style="width: 200px" placeholder="<#menu5_19_12#>" onkeypress="return enterKey(event, addDomain);">
+                                                <input class="btn btn-primary" type="button" value="<#menu5_19_11#>" onclick="addDomain()">
+                                                &nbsp;&nbsp;
+                                                <input type="text" id="rtf_kw" class="input" size="24" style="width: 200px" placeholder="<#menu5_19_14#>" onkeypress="return enterKey(event, doSearch);">
+                                                <input class="btn btn-primary" type="button" value="<#menu5_19_13#>" onclick="doSearch()">
+                                                <input class="btn" type="button" value="<#menu5_19_15#>" onclick="doReset()">
+                                            </td>
+                                        </tr>
                                     </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    </form>
 
-    <form method="post" name="gfwForm" action="/routeflow_action.asp" target="hidden_frame">
-    <input type="hidden" name="routeflow_action" value="">
-    <input type="hidden" name="current_page" value="routeflow.asp">
-    <div class="container-fluid">
-        <div class="row-fluid">
-            <div class="span3"></div>
-            <div class="span9">
-                <div class="row-fluid">
-                    <div class="span12">
-                        <div class="box well grad_colour_dark_blue">
-                            <div class="round_bottom">
-                                <div class="row-fluid">
+                                    <form method="post" name="gfwForm" action="/routeflow_action.asp" target="hidden_frame">
+                                    <input type="hidden" name="routeflow_action" value="">
+                                    <input type="hidden" name="routeflow_old" value="">
+                                    <input type="hidden" name="routeflow_domain" value="">
+                                    <input type="hidden" name="rtf_kw_back" value="">
+                                    <input type="hidden" name="current_page" value="routeflow.asp">
+
+                                    <div id="rtf_list_box">
                                     <table width="100%" cellpadding="4" cellspacing="0" class="table">
-                                        <tr>
-                                            <td>
-<textarea class="gfwlist" name="routeflow_gfwlist" spellcheck="false" wrap="off"><% routeflow_gfwlist(); %></textarea>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <center>
-                                                    <input class="btn btn-primary" style="width: 140px" type="button" value="<#menu5_19_7#>" onclick="saveGfwlist()" />
-                                                    <input class="btn" style="width: 140px" type="button" value="<#menu5_19_8#>" onclick="restartRouteflow()" />
-                                                </center>
-                                            </td>
-                                        </tr>
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 50px;">#</th>
+                                                <th><#menu5_19_16#></th>
+                                                <th style="width: 130px;"><#menu5_19_17#></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="rtf_tbody"></tbody>
                                     </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    </form>
+                                    </div>
+                                    </form>
 
-    <form method="post" name="uploadForm" action="/routeflow_upload.cgi" enctype="multipart/form-data" target="hidden_frame" onsubmit="showLoading();">
-    <div class="container-fluid">
-        <div class="row-fluid">
-            <div class="span3"></div>
-            <div class="span9">
-                <div class="row-fluid">
-                    <div class="span12">
-                        <div class="box well grad_colour_dark_blue">
-                            <div class="round_bottom">
-                                <div class="row-fluid">
+                                    <form method="post" name="uploadForm" action="/routeflow_upload.cgi" enctype="multipart/form-data" target="hidden_frame" onsubmit="showLoading();">
                                     <table width="100%" cellpadding="4" cellspacing="0" class="table">
                                         <tr>
                                             <td>
@@ -273,6 +359,8 @@ textarea.gfwlist {
                                             </td>
                                         </tr>
                                     </table>
+                                    </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -281,7 +369,6 @@ textarea.gfwlist {
             </div>
         </div>
     </div>
-    </form>
 
     <div id="footer"></div>
 </div>
