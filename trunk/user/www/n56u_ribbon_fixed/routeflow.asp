@@ -34,7 +34,9 @@ $j(document).ready(function(){
 
 function initial(){
 	show_banner(2);
-	show_menu(5,15,1);
+	/* 本页使用自定义选项卡，L3 传 0 以免 show_menu 再渲染一条重复的选项卡栏
+	 * （同时保留 #tabMenu 节点，show_menu 会向它写入空字符串） */
+	show_menu(5,15,0);
 	show_footer();
 	fill_status(routeflow_status());
 	$("routeflow_gfw_count").innerHTML = routeflow_gfw_count();
