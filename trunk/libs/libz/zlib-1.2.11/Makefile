@@ -16,7 +16,7 @@
 # To install in $HOME instead of /usr/local, use:
 #    make install prefix=$HOME
 
-CC=/workspace/toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-gcc -mips32r2 -march=mips32r2 -mtune=1004kc
+CC=/workspace/trunk/../toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-gcc -mips32r2 -march=mips32r2 -mtune=1004kc
 
 CFLAGS=-Os -fomit-frame-pointer -pipe -DEMBED -I/workspace/trunk/stage/include -Dlinux -D__linux__ -Dunix -Wall -Wno-trigraphs -Wno-strict-aliasing -Wno-format-security -fno-tree-slsr -fno-aggressive-loop-optimizations -Wno-pointer-sign -Wno-unused -ffunction-sections -fdata-sections -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN
 #CFLAGS=-O -DMAX_WBITS=14 -DMAX_MEM_LEVEL=7
@@ -27,8 +27,8 @@ CFLAGS=-Os -fomit-frame-pointer -pipe -DEMBED -I/workspace/trunk/stage/include -
 SFLAGS=-Os -fomit-frame-pointer -pipe -DEMBED -I/workspace/trunk/stage/include -Dlinux -D__linux__ -Dunix -Wall -Wno-trigraphs -Wno-strict-aliasing -Wno-format-security -fno-tree-slsr -fno-aggressive-loop-optimizations -Wno-pointer-sign -Wno-unused -ffunction-sections -fdata-sections -fPIC -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN
 LDFLAGS=-L/workspace/trunk/stage/lib -Wl,--gc-sections
 TEST_LDFLAGS=-L. libz.a
-LDSHARED=/workspace/toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-gcc -mips32r2 -march=mips32r2 -mtune=1004kc -shared -Wl,-soname,libz.so.1,--version-script,zlib.map
-CPP=/workspace/toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-gcc -mips32r2 -march=mips32r2 -mtune=1004kc -E
+LDSHARED=/workspace/trunk/../toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-gcc -mips32r2 -march=mips32r2 -mtune=1004kc -shared -Wl,-soname,libz.so.1,--version-script,zlib.map
+CPP=/workspace/trunk/../toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-gcc -mips32r2 -march=mips32r2 -mtune=1004kc -E
 
 STATICLIB=libz.a
 SHAREDLIB=libz.so
@@ -36,9 +36,9 @@ SHAREDLIBV=libz.so.1.2.11
 SHAREDLIBM=libz.so.1
 LIBS=$(STATICLIB) $(SHAREDLIBV)
 
-AR=/workspace/toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-ar
+AR=/workspace/trunk/../toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-ar
 ARFLAGS=rc
-RANLIB=/workspace/toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-ranlib
+RANLIB=/workspace/trunk/../toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-ranlib
 LDCONFIG=ldconfig
 LDSHAREDLIBC=-lc
 TAR=tar

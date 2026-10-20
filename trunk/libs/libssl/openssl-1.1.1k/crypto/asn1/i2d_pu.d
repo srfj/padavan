@@ -12,4 +12,4 @@ crypto/asn1/i2d_pu.o: crypto/asn1/i2d_pu.c include/internal/cryptlib.h \
  include/openssl/asn1err.h include/openssl/objectserr.h \
  include/openssl/rsa.h include/openssl/rsaerr.h include/openssl/dsa.h \
  include/openssl/dh.h include/openssl/dherr.h include/openssl/dsaerr.h \
- include/openssl/ec.h include/openssl/ecerr.h
+ include/openssl/ec.h

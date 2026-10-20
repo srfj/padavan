@@ -13,7 +13,7 @@ ssl/d1_srtp.o: ssl/d1_srtp.c include/openssl/objects.h \
  include/openssl/dherr.h include/openssl/dsaerr.h include/openssl/err.h \
  include/openssl/lhash.h include/openssl/ssl.h include/openssl/x509.h \
  include/openssl/evp.h include/openssl/evperr.h include/openssl/ec.h \
- include/openssl/ecerr.h include/openssl/sha.h include/openssl/x509err.h \
+ include/openssl/sha.h include/openssl/x509err.h \
  include/openssl/x509_vfy.h include/openssl/pkcs7.h \
  include/openssl/pkcs7err.h include/openssl/pem.h \
  include/openssl/pemerr.h include/openssl/hmac.h include/openssl/async.h \

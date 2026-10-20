@@ -13,17 +13,17 @@ our @EXPORT = qw(%config %target %disabled %withargs %unified_info @disablables)
 our %config = (
   AR => "ar",
   ARFLAGS => [ "r" ],
-  AS => "/workspace/toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-as -mips32r2 -march=mips32r2 -mtune=1004kc",
+  AS => "/workspace/trunk/../toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-as -mips32r2 -march=mips32r2 -mtune=1004kc",
   CC => "gcc",
   CFLAGS => [ "-mips32r2 -march=mips32r2 -mtune=1004kc -O3 -mips32r2 -march=mips32r2 -mtune=1004kc -fomit-frame-pointer -pipe -DEMBED -I/workspace/trunk/stage/include -Dlinux -D__linux__ -Dunix -Wall -Wno-trigraphs -Wno-strict-aliasing -Wno-format-security -fno-tree-slsr -fno-aggressive-loop-optimizations -Wno-pointer-sign -Wno-unused -ffunction-sections -fdata-sections -DOPENSSL_USE_IPV6=1 -DOPENSSL_PREFER_CHACHA_OVER_GCM -DOPENSSL_USE_IPV6=1 -DOPENSSL_PREFER_CHACHA_OVER_GCM" ],
   CPPDEFINES => [  ],
   CPPFLAGS => [  ],
   CPPINCLUDES => [  ],
-  CROSS_COMPILE => "/workspace/toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-",
+  CROSS_COMPILE => "/workspace/trunk/../toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-",
   CXX => "g++",
   CXXFLAGS => [ "-mips32r2 -march=mips32r2 -mtune=1004kc -O3 -mips32r2 -march=mips32r2 -mtune=1004kc -mips32r2 -march=mips32r2 -mtune=1004kc -fomit-frame-pointer -pipe -DEMBED -I/workspace/trunk/stage/include -Dlinux -D__linux__ -Dunix -Wall -Wno-trigraphs -Wno-strict-aliasing -Wno-format-security -fno-tree-slsr -fno-aggressive-loop-optimizations -Wno-pointer-sign -Wno-unused -ffunction-sections -fdata-sections -DOPENSSL_USE_IPV6=1 -DOPENSSL_PREFER_CHACHA_OVER_GCM -DOPENSSL_USE_IPV6=1 -DOPENSSL_PREFER_CHACHA_OVER_GCM -DOPENSSL_USE_IPV6=1 -DOPENSSL_PREFER_CHACHA_OVER_GCM" ],
   HASHBANGPERL => "/usr/bin/env perl",
-  LD => "/workspace/toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-ld",
+  LD => "/workspace/trunk/../toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-ld",
   LDFLAGS => [ "-L/workspace/trunk/stage/lib -Wl,--gc-sections" ],
   LDLIBS => [  ],
   PERL => "/usr/bin/perl",
@@ -36,7 +36,7 @@ our %config = (
   bn_ll => "1",
   build_file => "Makefile",
   build_file_templates => [ "Configurations/common0.tmpl", "Configurations/unix-Makefile.tmpl", "Configurations/common.tmpl" ],
-  build_infos => [ "./build.info", "crypto/build.info", "ssl/build.info", "engines/build.info", "apps/build.info", "util/build.info", "tools/build.info", "crypto/objects/build.info", "crypto/md4/build.info", "crypto/md5/build.info", "crypto/sha/build.info", "crypto/hmac/build.info", "crypto/poly1305/build.info", "crypto/siphash/build.info", "crypto/des/build.info", "crypto/aes/build.info", "crypto/rc4/build.info", "crypto/bf/build.info", "crypto/camellia/build.info", "crypto/chacha/build.info", "crypto/modes/build.info", "crypto/bn/build.info", "crypto/ec/build.info", "crypto/rsa/build.info", "crypto/dsa/build.info", "crypto/dh/build.info", "crypto/dso/build.info", "crypto/engine/build.info", "crypto/buffer/build.info", "crypto/bio/build.info", "crypto/stack/build.info", "crypto/lhash/build.info", "crypto/rand/build.info", "crypto/err/build.info", "crypto/evp/build.info", "crypto/asn1/build.info", "crypto/pem/build.info", "crypto/x509/build.info", "crypto/x509v3/build.info", "crypto/conf/build.info", "crypto/txt_db/build.info", "crypto/pkcs7/build.info", "crypto/pkcs12/build.info", "crypto/ocsp/build.info", "crypto/ui/build.info", "crypto/cmac/build.info", "crypto/ct/build.info", "crypto/async/build.info", "crypto/kdf/build.info", "crypto/store/build.info" ],
+  build_infos => [ "./build.info", "crypto/build.info", "ssl/build.info", "engines/build.info", "apps/build.info", "util/build.info", "tools/build.info", "crypto/objects/build.info", "crypto/md4/build.info", "crypto/md5/build.info", "crypto/sha/build.info", "crypto/hmac/build.info", "crypto/poly1305/build.info", "crypto/siphash/build.info", "crypto/des/build.info", "crypto/aes/build.info", "crypto/rc4/build.info", "crypto/bf/build.info", "crypto/camellia/build.info", "crypto/chacha/build.info", "crypto/modes/build.info", "crypto/bn/build.info", "crypto/rsa/build.info", "crypto/dsa/build.info", "crypto/dh/build.info", "crypto/dso/build.info", "crypto/engine/build.info", "crypto/buffer/build.info", "crypto/bio/build.info", "crypto/stack/build.info", "crypto/lhash/build.info", "crypto/rand/build.info", "crypto/err/build.info", "crypto/evp/build.info", "crypto/asn1/build.info", "crypto/pem/build.info", "crypto/x509/build.info", "crypto/x509v3/build.info", "crypto/conf/build.info", "crypto/txt_db/build.info", "crypto/pkcs7/build.info", "crypto/pkcs12/build.info", "crypto/ocsp/build.info", "crypto/ui/build.info", "crypto/cmac/build.info", "crypto/ct/build.info", "crypto/async/build.info", "crypto/kdf/build.info", "crypto/store/build.info" ],
   build_type => "release",
   builddir => ".",
   cflags => [ "-mips2", "-Wa,--noexecstack" ],
@@ -56,21 +56,21 @@ our %config = (
   major => "1",
   makedepprog => "\$(CROSS_COMPILE)gcc",
   minor => "1.1",
-  openssl_algorithm_defines => [ "OPENSSL_NO_ARIA", "OPENSSL_NO_BLAKE2", "OPENSSL_NO_CAST", "OPENSSL_NO_CMS", "OPENSSL_NO_COMP", "OPENSSL_NO_IDEA", "OPENSSL_NO_MD2", "OPENSSL_NO_MDC2", "OPENSSL_NO_RC2", "OPENSSL_NO_RC5", "OPENSSL_NO_RMD160", "OPENSSL_NO_SEED", "OPENSSL_NO_SM2", "OPENSSL_NO_SM3", "OPENSSL_NO_SM4", "OPENSSL_NO_SRP", "OPENSSL_NO_TS", "OPENSSL_NO_WHIRLPOOL" ],
+  openssl_algorithm_defines => [ "OPENSSL_NO_ARIA", "OPENSSL_NO_BLAKE2", "OPENSSL_NO_CAST", "OPENSSL_NO_CMS", "OPENSSL_NO_COMP", "OPENSSL_NO_EC", "OPENSSL_NO_IDEA", "OPENSSL_NO_MD2", "OPENSSL_NO_MDC2", "OPENSSL_NO_RC2", "OPENSSL_NO_RC5", "OPENSSL_NO_RMD160", "OPENSSL_NO_SEED", "OPENSSL_NO_SM2", "OPENSSL_NO_SM3", "OPENSSL_NO_SM4", "OPENSSL_NO_SRP", "OPENSSL_NO_TS", "OPENSSL_NO_WHIRLPOOL" ],
   openssl_api_defines => [  ],
-  openssl_other_defines => [ "OPENSSL_RAND_SEED_OS", "OPENSSL_NO_AFALGENG", "OPENSSL_NO_ASAN", "OPENSSL_NO_ASYNC", "OPENSSL_NO_CAPIENG", "OPENSSL_NO_CRYPTO_MDEBUG", "OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE", "OPENSSL_NO_DEVCRYPTOENG", "OPENSSL_NO_DSO", "OPENSSL_NO_EC2M", "OPENSSL_NO_EC_NISTP_64_GCC_128", "OPENSSL_NO_EGD", "OPENSSL_NO_ERR", "OPENSSL_NO_EXTERNAL_TESTS", "OPENSSL_NO_FUZZ_AFL", "OPENSSL_NO_FUZZ_LIBFUZZER", "OPENSSL_NO_HEARTBEATS", "OPENSSL_NO_HW", "OPENSSL_NO_HW_PADLOCK", "OPENSSL_NO_MSAN", "OPENSSL_NO_RFC3779", "OPENSSL_NO_SCTP", "OPENSSL_NO_SSL_TRACE", "OPENSSL_NO_SSL3", "OPENSSL_NO_SSL3_METHOD", "OPENSSL_NO_TESTS", "OPENSSL_NO_UBSAN", "OPENSSL_NO_UNIT_TEST", "OPENSSL_NO_WEAK_SSL_CIPHERS", "OPENSSL_NO_DYNAMIC_ENGINE" ],
+  openssl_other_defines => [ "OPENSSL_RAND_SEED_OS", "OPENSSL_NO_AFALGENG", "OPENSSL_NO_ASAN", "OPENSSL_NO_ASYNC", "OPENSSL_NO_CAPIENG", "OPENSSL_NO_CRYPTO_MDEBUG", "OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE", "OPENSSL_NO_DEVCRYPTOENG", "OPENSSL_NO_DSO", "OPENSSL_NO_EC2M", "OPENSSL_NO_EC_NISTP_64_GCC_128", "OPENSSL_NO_ECDH", "OPENSSL_NO_ECDSA", "OPENSSL_NO_EGD", "OPENSSL_NO_ERR", "OPENSSL_NO_EXTERNAL_TESTS", "OPENSSL_NO_FUZZ_AFL", "OPENSSL_NO_FUZZ_LIBFUZZER", "OPENSSL_NO_HEARTBEATS", "OPENSSL_NO_HW", "OPENSSL_NO_HW_PADLOCK", "OPENSSL_NO_MSAN", "OPENSSL_NO_RFC3779", "OPENSSL_NO_SCTP", "OPENSSL_NO_SSL_TRACE", "OPENSSL_NO_SSL3", "OPENSSL_NO_SSL3_METHOD", "OPENSSL_NO_TESTS", "OPENSSL_NO_TLS1_3", "OPENSSL_NO_UBSAN", "OPENSSL_NO_UNIT_TEST", "OPENSSL_NO_WEAK_SSL_CIPHERS", "OPENSSL_NO_DYNAMIC_ENGINE" ],
   openssl_sys_defines => [  ],
   openssl_thread_defines => [  ],
   openssldir => "/etc/ssl",
-  options => "enable-shared --prefix=/workspace/trunk/stage --openssldir=/etc/ssl no-afalgeng no-aria no-asan no-async no-blake2 no-buildtest-c++ no-capieng no-cast no-cms no-comp no-crypto-mdebug no-crypto-mdebug-backtrace no-devcryptoeng no-dso no-dynamic-engine no-ec2m no-ec_nistp_64_gcc_128 no-egd no-err no-external-tests no-fuzz-afl no-fuzz-libfuzzer no-heartbeats no-hw no-hw-padlock no-idea no-md2 no-mdc2 no-msan no-rc2 no-rc5 no-rfc3779 no-rmd160 no-sctp no-seed no-sm2 no-sm3 no-sm4 no-srp no-sse2 no-ssl-trace no-ssl3 no-ssl3-method no-tests no-threads no-ts no-ubsan no-unit-test no-weak-ssl-ciphers no-whirlpool no-zlib no-zlib-dynamic",
+  options => "enable-shared --prefix=/workspace/trunk/stage --openssldir=/etc/ssl no-afalgeng no-aria no-asan no-async no-blake2 no-buildtest-c++ no-capieng no-cast no-cms no-comp no-crypto-mdebug no-crypto-mdebug-backtrace no-devcryptoeng no-dso no-dynamic-engine no-ec no-ec2m no-ec_nistp_64_gcc_128 no-ecdh no-ecdsa no-egd no-err no-external-tests no-fuzz-afl no-fuzz-libfuzzer no-heartbeats no-hw no-hw-padlock no-idea no-md2 no-mdc2 no-msan no-rc2 no-rc5 no-rfc3779 no-rmd160 no-sctp no-seed no-sm2 no-sm3 no-sm4 no-srp no-sse2 no-ssl-trace no-ssl3 no-ssl3-method no-tests no-threads no-tls1_3 no-ts no-ubsan no-unit-test no-weak-ssl-ciphers no-whirlpool no-zlib no-zlib-dynamic",
   perl_archname => "x86_64-linux-gnu-thread-multi",
   perl_cmd => "/usr/bin/perl",
   perl_version => "5.38.2",
-  perlargv => [ "linux-mips32", "shared", "--prefix=/workspace/trunk/stage", "--openssldir=/etc/ssl", "no-capieng", "no-cms", "no-rfc3779", "no-seed", "no-ec2m", "no-err", "no-threads", "no-idea", "no-rc5", "no-rmd160", "no-static-engine", "no-md2", "no-sse2", "no-dso", "no-ts", "no-mdc2", "no-cast", "no-whirlpool", "no-sctp", "no-srp", "no-ssl2", "no-ssl3", "no-async", "no-blake2", "no-hw-padlock", "no-aria", "no-hw", "no-devcryptoeng", "no-ssl3-method", "no-tests", "no-sm2", "no-sm3", "no-sm4", "no-afalgeng", "no-comp", "no-rc2" ],
+  perlargv => [ "linux-mips32", "shared", "--prefix=/workspace/trunk/stage", "--openssldir=/etc/ssl", "no-capieng", "no-cms", "no-rfc3779", "no-seed", "no-ec2m", "no-err", "no-threads", "no-idea", "no-rc5", "no-rmd160", "no-static-engine", "no-md2", "no-sse2", "no-dso", "no-ts", "no-mdc2", "no-cast", "no-whirlpool", "no-sctp", "no-srp", "no-ssl2", "no-ssl3", "no-async", "no-blake2", "no-hw-padlock", "no-aria", "no-hw", "no-devcryptoeng", "no-ssl3-method", "no-tests", "no-sm2", "no-sm3", "no-sm4", "no-afalgeng", "no-comp", "no-rc2", "no-ec" ],
   perlenv => {
       "AR" => "ar",
       "ARFLAGS" => undef,
-      "AS" => "/workspace/toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-as -mips32r2 -march=mips32r2 -mtune=1004kc",
+      "AS" => "/workspace/trunk/../toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-as -mips32r2 -march=mips32r2 -mtune=1004kc",
       "ASFLAGS" => undef,
       "BUILDFILE" => undef,
       "CC" => "gcc",
@@ -79,11 +79,11 @@ our %config = (
       "CPPDEFINES" => undef,
       "CPPFLAGS" => undef,
       "CPPINCLUDES" => undef,
-      "CROSS_COMPILE" => "/workspace/toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-",
+      "CROSS_COMPILE" => "/workspace/trunk/../toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-",
       "CXX" => "g++",
       "CXXFLAGS" => "-mips32r2 -march=mips32r2 -mtune=1004kc -O3 -mips32r2 -march=mips32r2 -mtune=1004kc -mips32r2 -march=mips32r2 -mtune=1004kc -fomit-frame-pointer -pipe -DEMBED -I/workspace/trunk/stage/include -Dlinux -D__linux__ -Dunix -Wall -Wno-trigraphs -Wno-strict-aliasing -Wno-format-security -fno-tree-slsr -fno-aggressive-loop-optimizations -Wno-pointer-sign -Wno-unused -ffunction-sections -fdata-sections -DOPENSSL_USE_IPV6=1 -DOPENSSL_PREFER_CHACHA_OVER_GCM -DOPENSSL_USE_IPV6=1 -DOPENSSL_PREFER_CHACHA_OVER_GCM -DOPENSSL_USE_IPV6=1 -DOPENSSL_PREFER_CHACHA_OVER_GCM",
       "HASHBANGPERL" => undef,
-      "LD" => "/workspace/toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-ld",
+      "LD" => "/workspace/trunk/../toolchain-mipsel/toolchain-3.4.x/bin/mipsel-linux-uclibc-ld",
       "LDFLAGS" => "-L/workspace/trunk/stage/lib -Wl,--gc-sections",
       "LDLIBS" => undef,
       "MT" => undef,
@@ -106,7 +106,7 @@ our %config = (
   prefix => "/workspace/trunk/stage",
   processor => "",
   rc4_int => "unsigned char",
-  sdirs => [ "objects", "md4", "md5", "sha", "hmac", "poly1305", "siphash", "des", "aes", "rc4", "bf", "camellia", "chacha", "modes", "bn", "ec", "rsa", "dsa", "dh", "dso", "engine", "buffer", "bio", "stack", "lhash", "rand", "err", "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "ocsp", "ui", "cmac", "ct", "async", "kdf", "store" ],
+  sdirs => [ "objects", "md4", "md5", "sha", "hmac", "poly1305", "siphash", "des", "aes", "rc4", "bf", "camellia", "chacha", "modes", "bn", "rsa", "dsa", "dh", "dso", "engine", "buffer", "bio", "stack", "lhash", "rand", "err", "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "ocsp", "ui", "cmac", "ct", "async", "kdf", "store" ],
   shlib_major => "1",
   shlib_minor => "1",
   shlib_version_history => "",
@@ -339,8 +339,11 @@ our %disabled = (
   "devcryptoeng" => "option",
   "dso" => "option",
   "dynamic-engine" => "cascade",
+  "ec" => "option",
   "ec2m" => "option",
   "ec_nistp_64_gcc_128" => "default",
+  "ecdh" => "cascade",
+  "ecdsa" => "cascade",
   "egd" => "default",
   "err" => "option",
   "external-tests" => "default",
@@ -369,6 +372,7 @@ our %disabled = (
   "ssl3-method" => "option",
   "tests" => "option",
   "threads" => "option",
+  "tls1_3" => "cascade",
   "ts" => "option",
   "ubsan" => "default",
   "unit-test" => "default",
@@ -427,14 +431,6 @@ our %unified_info = (
                     "apps/progs.h",
                 ],
             "apps/dsaparam.o" =>
-                [
-                    "apps/progs.h",
-                ],
-            "apps/ec.o" =>
-                [
-                    "apps/progs.h",
-                ],
-            "apps/ecparam.o" =>
                 [
                     "apps/progs.h",
                 ],
@@ -1177,82 +1173,6 @@ our %unified_info = (
                             "crypto/dso/dso_openssl.o",
                             "crypto/dso/dso_vms.o",
                             "crypto/dso/dso_win32.o",
-                        ],
-                    "products" =>
-                        {
-                            "lib" =>
-                                [
-                                    "libcrypto",
-                                ],
-                        },
-                },
-            "crypto/ec" =>
-                {
-                    "deps" =>
-                        [
-                            "crypto/ec/curve25519.o",
-                            "crypto/ec/ec2_oct.o",
-                            "crypto/ec/ec2_smpl.o",
-                            "crypto/ec/ec_ameth.o",
-                            "crypto/ec/ec_asn1.o",
-                            "crypto/ec/ec_check.o",
-                            "crypto/ec/ec_curve.o",
-                            "crypto/ec/ec_cvt.o",
-                            "crypto/ec/ec_err.o",
-                            "crypto/ec/ec_key.o",
-                            "crypto/ec/ec_kmeth.o",
-                            "crypto/ec/ec_lib.o",
-                            "crypto/ec/ec_mult.o",
-                            "crypto/ec/ec_oct.o",
-                            "crypto/ec/ec_pmeth.o",
-                            "crypto/ec/ec_print.o",
-                            "crypto/ec/ecdh_kdf.o",
-                            "crypto/ec/ecdh_ossl.o",
-                            "crypto/ec/ecdsa_ossl.o",
-                            "crypto/ec/ecdsa_sign.o",
-                            "crypto/ec/ecdsa_vrf.o",
-                            "crypto/ec/eck_prn.o",
-                            "crypto/ec/ecp_mont.o",
-                            "crypto/ec/ecp_nist.o",
-                            "crypto/ec/ecp_nistp224.o",
-                            "crypto/ec/ecp_nistp256.o",
-                            "crypto/ec/ecp_nistp521.o",
-                            "crypto/ec/ecp_nistputil.o",
-                            "crypto/ec/ecp_oct.o",
-                            "crypto/ec/ecp_smpl.o",
-                            "crypto/ec/ecx_meth.o",
-                        ],
-                    "products" =>
-                        {
-                            "lib" =>
-                                [
-                                    "libcrypto",
-                                ],
-                        },
-                },
-            "crypto/ec/curve448" =>
-                {
-                    "deps" =>
-                        [
-                            "crypto/ec/curve448/curve448.o",
-                            "crypto/ec/curve448/curve448_tables.o",
-                            "crypto/ec/curve448/eddsa.o",
-                            "crypto/ec/curve448/f_generic.o",
-                            "crypto/ec/curve448/scalar.o",
-                        ],
-                    "products" =>
-                        {
-                            "lib" =>
-                                [
-                                    "libcrypto",
-                                ],
-                        },
-                },
-            "crypto/ec/curve448/arch_32" =>
-                {
-                    "deps" =>
-                        [
-                            "crypto/ec/curve448/arch_32/f_impl.o",
                         ],
                     "products" =>
                         {
@@ -2407,54 +2327,6 @@ our %unified_info = (
                     "crypto/des/asm/dest4-sparcv9.pl",
                     "\$(PERLASM_SCHEME)",
                 ],
-            "crypto/ec/ecp_nistz256-armv4.S" =>
-                [
-                    "crypto/ec/asm/ecp_nistz256-armv4.pl",
-                    "\$(PERLASM_SCHEME)",
-                ],
-            "crypto/ec/ecp_nistz256-armv8.S" =>
-                [
-                    "crypto/ec/asm/ecp_nistz256-armv8.pl",
-                    "\$(PERLASM_SCHEME)",
-                ],
-            "crypto/ec/ecp_nistz256-avx2.s" =>
-                [
-                    "crypto/ec/asm/ecp_nistz256-avx2.pl",
-                    "\$(PERLASM_SCHEME)",
-                ],
-            "crypto/ec/ecp_nistz256-ppc64.s" =>
-                [
-                    "crypto/ec/asm/ecp_nistz256-ppc64.pl",
-                    "\$(PERLASM_SCHEME)",
-                ],
-            "crypto/ec/ecp_nistz256-sparcv9.S" =>
-                [
-                    "crypto/ec/asm/ecp_nistz256-sparcv9.pl",
-                    "\$(PERLASM_SCHEME)",
-                ],
-            "crypto/ec/ecp_nistz256-x86.s" =>
-                [
-                    "crypto/ec/asm/ecp_nistz256-x86.pl",
-                    "\$(PERLASM_SCHEME)",
-                    "\$(LIB_CFLAGS)",
-                    "\$(LIB_CPPFLAGS)",
-                    "\$(PROCESSOR)",
-                ],
-            "crypto/ec/ecp_nistz256-x86_64.s" =>
-                [
-                    "crypto/ec/asm/ecp_nistz256-x86_64.pl",
-                    "\$(PERLASM_SCHEME)",
-                ],
-            "crypto/ec/x25519-ppc64.s" =>
-                [
-                    "crypto/ec/asm/x25519-ppc64.pl",
-                    "\$(PERLASM_SCHEME)",
-                ],
-            "crypto/ec/x25519-x86_64.s" =>
-                [
-                    "crypto/ec/asm/x25519-x86_64.pl",
-                    "\$(PERLASM_SCHEME)",
-                ],
             "crypto/ia64cpuid.s" =>
                 [
                     "crypto/ia64cpuid.S",
@@ -2976,18 +2848,6 @@ our %unified_info = (
                     "apps",
                 ],
             "apps/dsaparam.o" =>
-                [
-                    ".",
-                    "include",
-                    "apps",
-                ],
-            "apps/ec.o" =>
-                [
-                    ".",
-                    "include",
-                    "apps",
-                ],
-            "apps/ecparam.o" =>
                 [
                     ".",
                     "include",
@@ -4434,215 +4294,6 @@ our %unified_info = (
                     "include",
                 ],
             "crypto/ebcdic.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/curve25519.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/curve448/arch_32/f_impl.o" =>
-                [
-                    ".",
-                    "include",
-                    "crypto/ec/curve448/arch_32",
-                    "crypto/ec/curve448",
-                ],
-            "crypto/ec/curve448/curve448.o" =>
-                [
-                    ".",
-                    "include",
-                    "crypto/ec/curve448/arch_32",
-                    "crypto/ec/curve448",
-                ],
-            "crypto/ec/curve448/curve448_tables.o" =>
-                [
-                    ".",
-                    "include",
-                    "crypto/ec/curve448/arch_32",
-                    "crypto/ec/curve448",
-                ],
-            "crypto/ec/curve448/eddsa.o" =>
-                [
-                    ".",
-                    "include",
-                    "crypto/ec/curve448/arch_32",
-                    "crypto/ec/curve448",
-                ],
-            "crypto/ec/curve448/f_generic.o" =>
-                [
-                    ".",
-                    "include",
-                    "crypto/ec/curve448/arch_32",
-                    "crypto/ec/curve448",
-                ],
-            "crypto/ec/curve448/scalar.o" =>
-                [
-                    ".",
-                    "include",
-                    "crypto/ec/curve448/arch_32",
-                    "crypto/ec/curve448",
-                ],
-            "crypto/ec/ec2_oct.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec2_smpl.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec_ameth.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec_asn1.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec_check.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec_curve.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec_cvt.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec_err.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec_key.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec_kmeth.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec_lib.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec_mult.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec_oct.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec_pmeth.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ec_print.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecdh_kdf.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecdh_ossl.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecdsa_ossl.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecdsa_sign.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecdsa_vrf.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/eck_prn.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecp_mont.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecp_nist.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecp_nistp224.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecp_nistp256.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecp_nistp521.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecp_nistputil.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecp_nistz256-armv4.o" =>
-                [
-                    "crypto",
-                ],
-            "crypto/ec/ecp_nistz256-armv8.o" =>
-                [
-                    "crypto",
-                ],
-            "crypto/ec/ecp_nistz256-sparcv9.o" =>
-                [
-                    "crypto",
-                ],
-            "crypto/ec/ecp_oct.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecp_smpl.o" =>
-                [
-                    ".",
-                    "include",
-                ],
-            "crypto/ec/ecx_meth.o" =>
                 [
                     ".",
                     "include",
@@ -6598,8 +6249,6 @@ our %unified_info = (
             "# GNU make \"catch all\"",
             "crypto/modes/ghash-%.S:	crypto/modes/asm/ghash-%.pl",
             "	CC=\"\$(CC)\" \$(PERL) \$< \$(PERLASM_SCHEME) \$\@",
-            "crypto/ec/ecp_nistz256-%.S:	crypto/ec/asm/ecp_nistz256-%.pl",
-            "	CC=\"\$(CC)\" \$(PERL) \$< \$(PERLASM_SCHEME) \$\@",
         ],
     "rename" =>
         {
@@ -6685,14 +6334,6 @@ our %unified_info = (
                 [
                     "apps/dsaparam.c",
                 ],
-            "apps/ec.o" =>
-                [
-                    "apps/ec.c",
-                ],
-            "apps/ecparam.o" =>
-                [
-                    "apps/ecparam.c",
-                ],
             "apps/enc.o" =>
                 [
                     "apps/enc.c",
@@ -6746,8 +6387,6 @@ our %unified_info = (
                     "apps/dhparam.o",
                     "apps/dsa.o",
                     "apps/dsaparam.o",
-                    "apps/ec.o",
-                    "apps/ecparam.o",
                     "apps/enc.o",
                     "apps/engine.o",
                     "apps/errstr.o",
@@ -7805,154 +7444,6 @@ our %unified_info = (
             "crypto/ebcdic.o" =>
                 [
                     "crypto/ebcdic.c",
-                ],
-            "crypto/ec/curve25519.o" =>
-                [
-                    "crypto/ec/curve25519.c",
-                ],
-            "crypto/ec/curve448/arch_32/f_impl.o" =>
-                [
-                    "crypto/ec/curve448/arch_32/f_impl.c",
-                ],
-            "crypto/ec/curve448/curve448.o" =>
-                [
-                    "crypto/ec/curve448/curve448.c",
-                ],
-            "crypto/ec/curve448/curve448_tables.o" =>
-                [
-                    "crypto/ec/curve448/curve448_tables.c",
-                ],
-            "crypto/ec/curve448/eddsa.o" =>
-                [
-                    "crypto/ec/curve448/eddsa.c",
-                ],
-            "crypto/ec/curve448/f_generic.o" =>
-                [
-                    "crypto/ec/curve448/f_generic.c",
-                ],
-            "crypto/ec/curve448/scalar.o" =>
-                [
-                    "crypto/ec/curve448/scalar.c",
-                ],
-            "crypto/ec/ec2_oct.o" =>
-                [
-                    "crypto/ec/ec2_oct.c",
-                ],
-            "crypto/ec/ec2_smpl.o" =>
-                [
-                    "crypto/ec/ec2_smpl.c",
-                ],
-            "crypto/ec/ec_ameth.o" =>
-                [
-                    "crypto/ec/ec_ameth.c",
-                ],
-            "crypto/ec/ec_asn1.o" =>
-                [
-                    "crypto/ec/ec_asn1.c",
-                ],
-            "crypto/ec/ec_check.o" =>
-                [
-                    "crypto/ec/ec_check.c",
-                ],
-            "crypto/ec/ec_curve.o" =>
-                [
-                    "crypto/ec/ec_curve.c",
-                ],
-            "crypto/ec/ec_cvt.o" =>
-                [
-                    "crypto/ec/ec_cvt.c",
-                ],
-            "crypto/ec/ec_err.o" =>
-                [
-                    "crypto/ec/ec_err.c",
-                ],
-            "crypto/ec/ec_key.o" =>
-                [
-                    "crypto/ec/ec_key.c",
-                ],
-            "crypto/ec/ec_kmeth.o" =>
-                [
-                    "crypto/ec/ec_kmeth.c",
-                ],
-            "crypto/ec/ec_lib.o" =>
-                [
-                    "crypto/ec/ec_lib.c",
-                ],
-            "crypto/ec/ec_mult.o" =>
-                [
-                    "crypto/ec/ec_mult.c",
-                ],
-            "crypto/ec/ec_oct.o" =>
-                [
-                    "crypto/ec/ec_oct.c",
-                ],
-            "crypto/ec/ec_pmeth.o" =>
-                [
-                    "crypto/ec/ec_pmeth.c",
-                ],
-            "crypto/ec/ec_print.o" =>
-                [
-                    "crypto/ec/ec_print.c",
-                ],
-            "crypto/ec/ecdh_kdf.o" =>
-                [
-                    "crypto/ec/ecdh_kdf.c",
-                ],
-            "crypto/ec/ecdh_ossl.o" =>
-                [
-                    "crypto/ec/ecdh_ossl.c",
-                ],
-            "crypto/ec/ecdsa_ossl.o" =>
-                [
-                    "crypto/ec/ecdsa_ossl.c",
-                ],
-            "crypto/ec/ecdsa_sign.o" =>
-                [
-                    "crypto/ec/ecdsa_sign.c",
-                ],
-            "crypto/ec/ecdsa_vrf.o" =>
-                [
-                    "crypto/ec/ecdsa_vrf.c",
-                ],
-            "crypto/ec/eck_prn.o" =>
-                [
-                    "crypto/ec/eck_prn.c",
-                ],
-            "crypto/ec/ecp_mont.o" =>
-                [
-                    "crypto/ec/ecp_mont.c",
-                ],
-            "crypto/ec/ecp_nist.o" =>
-                [
-                    "crypto/ec/ecp_nist.c",
-                ],
-            "crypto/ec/ecp_nistp224.o" =>
-                [
-                    "crypto/ec/ecp_nistp224.c",
-                ],
-            "crypto/ec/ecp_nistp256.o" =>
-                [
-                    "crypto/ec/ecp_nistp256.c",
-                ],
-            "crypto/ec/ecp_nistp521.o" =>
-                [
-                    "crypto/ec/ecp_nistp521.c",
-                ],
-            "crypto/ec/ecp_nistputil.o" =>
-                [
-                    "crypto/ec/ecp_nistputil.c",
-                ],
-            "crypto/ec/ecp_oct.o" =>
-                [
-                    "crypto/ec/ecp_oct.c",
-                ],
-            "crypto/ec/ecp_smpl.o" =>
-                [
-                    "crypto/ec/ecp_smpl.c",
-                ],
-            "crypto/ec/ecx_meth.o" =>
-                [
-                    "crypto/ec/ecx_meth.c",
                 ],
             "crypto/engine/eng_all.o" =>
                 [
@@ -9415,43 +8906,6 @@ our %unified_info = (
                     "crypto/dso/dso_vms.o",
                     "crypto/dso/dso_win32.o",
                     "crypto/ebcdic.o",
-                    "crypto/ec/curve25519.o",
-                    "crypto/ec/curve448/arch_32/f_impl.o",
-                    "crypto/ec/curve448/curve448.o",
-                    "crypto/ec/curve448/curve448_tables.o",
-                    "crypto/ec/curve448/eddsa.o",
-                    "crypto/ec/curve448/f_generic.o",
-                    "crypto/ec/curve448/scalar.o",
-                    "crypto/ec/ec2_oct.o",
-                    "crypto/ec/ec2_smpl.o",
-                    "crypto/ec/ec_ameth.o",
-                    "crypto/ec/ec_asn1.o",
-                    "crypto/ec/ec_check.o",
-                    "crypto/ec/ec_curve.o",
-                    "crypto/ec/ec_cvt.o",
-                    "crypto/ec/ec_err.o",
-                    "crypto/ec/ec_key.o",
-                    "crypto/ec/ec_kmeth.o",
-                    "crypto/ec/ec_lib.o",
-                    "crypto/ec/ec_mult.o",
-                    "crypto/ec/ec_oct.o",
-                    "crypto/ec/ec_pmeth.o",
-                    "crypto/ec/ec_print.o",
-                    "crypto/ec/ecdh_kdf.o",
-                    "crypto/ec/ecdh_ossl.o",
-                    "crypto/ec/ecdsa_ossl.o",
-                    "crypto/ec/ecdsa_sign.o",
-                    "crypto/ec/ecdsa_vrf.o",
-                    "crypto/ec/eck_prn.o",
-                    "crypto/ec/ecp_mont.o",
-                    "crypto/ec/ecp_nist.o",
-                    "crypto/ec/ecp_nistp224.o",
-                    "crypto/ec/ecp_nistp256.o",
-                    "crypto/ec/ecp_nistp521.o",
-                    "crypto/ec/ecp_nistputil.o",
-                    "crypto/ec/ecp_oct.o",
-                    "crypto/ec/ecp_smpl.o",
-                    "crypto/ec/ecx_meth.o",
                     "crypto/engine/eng_all.o",
                     "crypto/engine/eng_cnf.o",
                     "crypto/engine/eng_ctrl.o",
@@ -10067,11 +9521,21 @@ my %disabled_info = (
     'dso' => {
         macro => 'OPENSSL_NO_DSO',
     },
+    'ec' => {
+        macro => 'OPENSSL_NO_EC',
+        skipped => [ 'crypto/ec' ],
+    },
     'ec2m' => {
         macro => 'OPENSSL_NO_EC2M',
     },
     'ec_nistp_64_gcc_128' => {
         macro => 'OPENSSL_NO_EC_NISTP_64_GCC_128',
+    },
+    'ecdh' => {
+        macro => 'OPENSSL_NO_ECDH',
+    },
+    'ecdsa' => {
+        macro => 'OPENSSL_NO_ECDSA',
     },
     'egd' => {
         macro => 'OPENSSL_NO_EGD',
@@ -10161,6 +9625,9 @@ my %disabled_info = (
     },
     'tests' => {
         macro => 'OPENSSL_NO_TESTS',
+    },
+    'tls1_3' => {
+        macro => 'OPENSSL_NO_TLS1_3',
     },
     'ts' => {
         macro => 'OPENSSL_NO_TS',

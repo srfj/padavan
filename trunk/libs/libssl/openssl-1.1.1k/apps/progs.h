@@ -34,8 +34,6 @@ extern int dgst_main(int argc, char *argv[]);
 extern int dhparam_main(int argc, char *argv[]);
 extern int dsa_main(int argc, char *argv[]);
 extern int dsaparam_main(int argc, char *argv[]);
-extern int ec_main(int argc, char *argv[]);
-extern int ecparam_main(int argc, char *argv[]);
 extern int enc_main(int argc, char *argv[]);
 extern int engine_main(int argc, char *argv[]);
 extern int errstr_main(int argc, char *argv[]);
@@ -81,8 +79,6 @@ extern const OPTIONS dgst_options[];
 extern const OPTIONS dhparam_options[];
 extern const OPTIONS dsa_options[];
 extern const OPTIONS dsaparam_options[];
-extern const OPTIONS ec_options[];
-extern const OPTIONS ecparam_options[];
 extern const OPTIONS enc_options[];
 extern const OPTIONS engine_options[];
 extern const OPTIONS errstr_options[];
@@ -139,12 +135,6 @@ static FUNCTION functions[] = {
 #endif
 #ifndef OPENSSL_NO_DSA
     {FT_general, "dsaparam", dsaparam_main, dsaparam_options},
-#endif
-#ifndef OPENSSL_NO_EC
-    {FT_general, "ec", ec_main, ec_options},
-#endif
-#ifndef OPENSSL_NO_EC
-    {FT_general, "ecparam", ecparam_main, ecparam_options},
 #endif
     {FT_general, "enc", enc_main, enc_options},
 #ifndef OPENSSL_NO_ENGINE

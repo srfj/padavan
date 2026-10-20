@@ -13,10 +13,9 @@ ssl/d1_lib.o: ssl/d1_lib.c e_os.h include/openssl/opensslconf.h \
  include/openssl/dsa.h include/openssl/dh.h include/openssl/dherr.h \
  include/openssl/dsaerr.h include/openssl/err.h include/openssl/lhash.h \
  include/openssl/ssl.h include/openssl/x509.h include/openssl/evp.h \
- include/openssl/evperr.h include/openssl/ec.h include/openssl/ecerr.h \
- include/openssl/sha.h include/openssl/x509err.h \
- include/openssl/x509_vfy.h include/openssl/pkcs7.h \
- include/openssl/pkcs7err.h include/openssl/pem.h \
+ include/openssl/evperr.h include/openssl/ec.h include/openssl/sha.h \
+ include/openssl/x509err.h include/openssl/x509_vfy.h \
+ include/openssl/pkcs7.h include/openssl/pkcs7err.h include/openssl/pem.h \
  include/openssl/pemerr.h include/openssl/hmac.h include/openssl/async.h \
  include/openssl/asyncerr.h include/openssl/ct.h include/openssl/cterr.h \
  include/openssl/sslerr.h include/openssl/ssl2.h include/openssl/ssl3.h \

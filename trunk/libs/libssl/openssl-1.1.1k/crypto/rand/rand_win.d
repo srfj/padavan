@@ -12,6 +12,6 @@ crypto/rand/rand_win.o: crypto/rand/rand_win.c \
  include/openssl/obj_mac.h include/openssl/asn1.h \
  include/openssl/asn1err.h include/openssl/bn.h include/openssl/bnerr.h \
  include/openssl/objectserr.h include/openssl/sha.h \
- include/openssl/hmac.h include/openssl/ec.h include/openssl/ecerr.h \
- include/openssl/rand_drbg.h include/internal/tsan_assist.h \
- include/internal/numbers.h include/crypto/rand.h
+ include/openssl/hmac.h include/openssl/ec.h include/openssl/rand_drbg.h \
+ include/internal/tsan_assist.h include/internal/numbers.h \
+ include/crypto/rand.h

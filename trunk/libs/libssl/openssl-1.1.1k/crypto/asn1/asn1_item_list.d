@@ -12,12 +12,11 @@ crypto/asn1/asn1_item_list.o: crypto/asn1/asn1_item_list.c \
  include/openssl/dherr.h include/openssl/ocsp.h include/openssl/x509.h \
  include/openssl/evp.h include/openssl/evperr.h include/openssl/objects.h \
  include/openssl/obj_mac.h include/openssl/objectserr.h \
- include/openssl/ec.h include/openssl/ecerr.h include/openssl/rsa.h \
- include/openssl/rsaerr.h include/openssl/dsa.h include/openssl/dsaerr.h \
- include/openssl/sha.h include/openssl/x509err.h \
- include/openssl/x509_vfy.h include/openssl/pkcs7.h \
- include/openssl/pkcs7err.h include/openssl/x509v3.h \
- include/openssl/conf.h include/openssl/conferr.h \
- include/openssl/x509v3err.h include/openssl/ocsperr.h \
- include/openssl/pkcs12.h include/openssl/pkcs12err.h \
- crypto/asn1/asn1_item_list.h
+ include/openssl/ec.h include/openssl/rsa.h include/openssl/rsaerr.h \
+ include/openssl/dsa.h include/openssl/dsaerr.h include/openssl/sha.h \
+ include/openssl/x509err.h include/openssl/x509_vfy.h \
+ include/openssl/pkcs7.h include/openssl/pkcs7err.h \
+ include/openssl/x509v3.h include/openssl/conf.h \
+ include/openssl/conferr.h include/openssl/x509v3err.h \
+ include/openssl/ocsperr.h include/openssl/pkcs12.h \
+ include/openssl/pkcs12err.h crypto/asn1/asn1_item_list.h
