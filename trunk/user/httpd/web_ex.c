@@ -2315,18 +2315,22 @@ static int routeflow_gfw_state_hook(int eid, webs_t wp, int argc, char **argv)
 static int routeflow_gfw_rows_hook(int eid, webs_t wp, int argc, char **argv)
 {
 	const char *kw = websGetVar(wp, "keyword", "");
+	const char *all = websGetVar(wp, "all", "");
 	FILE *f;
 	char line[512];
 	int shown = 0;
+	int show_all = (all && all[0] == '1');
 
 	websWrite(wp, "function routeflow_gfw_rows() { return [");
 
-	if (kw && *kw && (f = fopen(RTF_LIST, "r"))) {
+	/* 默认（既无关键字也无 all 参数）不输出任何数据；
+	 * all=1 时用于“上传后预览”，列出前 RTF_MAX_ROWS 条。 */
+	if (((kw && *kw) || show_all) && (f = fopen(RTF_LIST, "r"))) {
 		while (fgets(line, sizeof(line), f)) {
 			rtf_trim(line);
 			if (!line[0] || line[0] == '#')
 				continue;
-			if (!rtf_stristr(line, kw))
+			if (!show_all && !rtf_stristr(line, kw))
 				continue;
 			if (shown >= RTF_MAX_ROWS)
 				break;
@@ -2345,13 +2349,14 @@ static int routeflow_gfw_rows_hook(int eid, webs_t wp, int argc, char **argv)
 static int routeflow_action_hook(int eid, webs_t wp, int argc, char **argv)
 {
 	char *action = websGetVar(wp, "routeflow_action", "");
+	char *kw = websGetVar(wp, "rtf_kw_back", "");
+	char *domain = websGetVar(wp, "routeflow_domain", "");
 	int changed = 0;
 
 	if (!strcmp(action, "add"))
-		changed = rtf_list_add(websGetVar(wp, "routeflow_domain", ""));
+		changed = rtf_list_add(domain);
 	else if (!strcmp(action, "edit"))
-		changed = rtf_list_edit(websGetVar(wp, "routeflow_old", ""),
-			websGetVar(wp, "routeflow_domain", ""));
+		changed = rtf_list_edit(websGetVar(wp, "routeflow_old", ""), domain);
 	else if (!strcmp(action, "delete"))
 		changed = rtf_list_delete(websGetVar(wp, "routeflow_old", ""));
 
@@ -2361,9 +2366,15 @@ static int routeflow_action_hook(int eid, webs_t wp, int argc, char **argv)
 		notify_rc(RCN_RESTART_ROUTEFLOW);
 	}
 
-	websWrite(wp, "parent.location.href=\"/routeflow.asp?rtf_tab=gfw&keyword=");
-	rtf_url_encode(wp, websGetVar(wp, "rtf_kw_back", ""));
-	websWrite(wp, "\";\n");
+	/* 若原本没有搜索关键字，则用新增/修改后的域名作为关键字，方便用户立即看到结果 */
+	if (changed && !kw[0] && strcmp(action, "delete") != 0)
+		kw = domain;
+
+	/* 注意：routeflow_action.asp 中 <% routeflow_action(); %> 位于 <script> 之外，
+	 * 因此这里必须自行输出 <script> 标签，否则脚本不会执行，页面会一直停在“正在处理”。 */
+	websWrite(wp, "<script>parent.location.href=\"/routeflow.asp?rtf_tab=gfw&keyword=");
+	rtf_url_encode(wp, kw);
+	websWrite(wp, "\";</script>\n");
 	return 0;
 }
 #endif
@@ -4150,7 +4161,7 @@ do_routeflow_upload_cgi(const char *url, FILE *stream)
 		notify_rc(RCN_RESTART_ROUTEFLOW);
 	}
 	fprintf(stream, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html\">"
-		"<script>parent.location.href='/routeflow.asp';</script></head><body></body></html>\n");
+		"<script>parent.location.href='/routeflow.asp?rtf_tab=gfw&all=1';</script></head><body></body></html>\n");
 	fflush(stream);
 }
 #endif
