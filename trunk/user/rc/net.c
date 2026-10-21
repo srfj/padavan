@@ -807,6 +807,15 @@ restart_firewall(void)
 	/* re-build iptables rules */
 	start_firewall_ex();
 
+	/* RouteFlow 依赖 mangle 表的自定义链 PREROUTING/OUTPUT 规则，
+	 * iptables-restore 会 flush 整个 mangle 表，必须在防火墙重建后补回。
+	 * 典型场景：boot 时 start_routeflow() 先跑，几秒后 WAN 口拿到 IP
+	 * 触发 restart_firewall_wan → iptables-restore → RouteFlow 被 flush。 */
+#if defined(APP_ROUTEFLOW)
+	if (nvram_get_int("routeflow_enable") == 1)
+		restart_routeflow();
+#endif
+
 	/* update UPnP forwards from lease file */
 	update_upnp();
 }
