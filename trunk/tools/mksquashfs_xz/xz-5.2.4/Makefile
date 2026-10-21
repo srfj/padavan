@@ -221,8 +221,8 @@ am__DIST_COMMON = $(srcdir)/Doxyfile.in $(srcdir)/Makefile.in \
 	$(top_srcdir)/build-aux/missing ABOUT-NLS AUTHORS COPYING \
 	ChangeLog INSTALL NEWS README THANKS TODO build-aux/compile \
 	build-aux/config.guess build-aux/config.rpath \
-	build-aux/config.sub build-aux/depcomp build-aux/install-sh \
-	build-aux/ltmain.sh build-aux/missing
+	build-aux/config.sub build-aux/install-sh build-aux/ltmain.sh \
+	build-aux/missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -315,7 +315,7 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 INTLLIBS = 
 INTL_MACOSX_LIBS = 
-LD = ld -m elf_x86_64 -m elf_x86_64
+LD = /usr/bin/ld -m elf_x86_64
 LDFLAGS = 
 LIBICONV = -liconv
 LIBINTL = 
@@ -335,7 +335,7 @@ MKDIR_P = /usr/bin/mkdir -p
 MSGFMT = /usr/bin/msgfmt
 MSGFMT_015 = /usr/bin/msgfmt
 MSGMERGE = /usr/bin/msgmerge
-NM = nm
+NM = /usr/bin/nm -B
 NMEDIT = 
 OBJDUMP = objdump
 OBJEXT = o
@@ -370,7 +370,7 @@ abs_builddir = /workspace/trunk/tools/mksquashfs_xz/xz-5.2.4
 abs_srcdir = /workspace/trunk/tools/mksquashfs_xz/xz-5.2.4
 abs_top_builddir = /workspace/trunk/tools/mksquashfs_xz/xz-5.2.4
 abs_top_srcdir = /workspace/trunk/tools/mksquashfs_xz/xz-5.2.4
-ac_ct_AR = 
+ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
 am__include = include
