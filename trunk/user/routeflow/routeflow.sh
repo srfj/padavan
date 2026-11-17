@@ -12,6 +12,7 @@ RF_DIR="/etc/storage/routeflow"
 GFW_LIST="$RF_DIR/gfwlist.txt"
 DEF_LIST="/etc_ro/routeflow/gfwlist.txt"
 NORM_LIST="/tmp/routeflow/gfwlist.norm.txt"
+NORM_IP_LIST="/tmp/routeflow/ipset.norm.txt"
 DNSMASQ_CONF="/etc/storage/dnsmasq/dnsmasq.conf"
 IPSET="rf_gfw"
 MARK="0x40"
@@ -43,11 +44,36 @@ seed_list() {
 	fi
 }
 
-# 把用户列表规范化为“每行一个域名”，兼容空格/逗号/换行分隔
+# 把用户列表规范化为两份：
+#   NORM_LIST    —— 域名，交给 dnsmasq 的 gfwlist 指令
+#   NORM_IP_LIST —— IPv4 地址，CIDR 已展开为单个地址，直接灌入 ipset
+# 兼容空格/逗号/换行分隔。
+#
+# 注意：IPv4/CIDR 条目绝对不能写进 dnsmasq 的 gfwlist/ipset 配置。
+# gfwlist 补丁按域名解析每一行，遇到 "91.108.4.0/22" 会把它拆成
+# "/91.108.4.0" 这种残缺的 server= 参数，进而踩到 ret_err() 里
+# strcpy() 写字符串常量的坑，dnsmasq 直接段错误退出——表现为全网 DNS 失效。
 normalize_list() {
 	mkdir -p "$(dirname "$NORM_LIST")" 2>/dev/null
+	: > "$NORM_LIST"
+	: > "$NORM_IP_LIST"
 	tr ', \t' '\n\n\n' < "$GFW_LIST" 2>/dev/null | \
-	awk '
+	awk -v domains="$NORM_LIST" -v ips="$NORM_IP_LIST" '
+		function octet(s) {
+			return s ~ /^[0-9][0-9]?[0-9]?$/ && s + 0 <= 255
+		}
+		function ip2int(s,   a) {
+			split(s, a, "\\.")
+			return ((a[1] * 256 + a[2]) * 256 + a[3]) * 256 + a[4]
+		}
+		function int2ip(n) {
+			return int(n / 16777216) "." int(n / 65536) % 256 "." \
+			       int(n / 256) % 256 "." int(n) % 256
+		}
+		function is_ip(s,   a) {
+			if (split(s, a, "\\.") != 4) return 0
+			return octet(a[1]) && octet(a[2]) && octet(a[3]) && octet(a[4])
+		}
 		{
 			sub(/\r$/, "")
 			d = tolower($0)
@@ -56,9 +82,34 @@ normalize_list() {
 			sub(/^\*\./, "", d)
 			sub(/^\./, "", d)
 			if (d == "" || d ~ /^#/) next
-			print d
+
+			# CIDR：校验后展开成单个 IPv4，避免依赖 hash:net 集合类型
+			if (index(d, "/")) {
+				base = substr(d, 1, index(d, "/") - 1)
+				bits = substr(d, index(d, "/") + 1) + 0
+				if (!is_ip(base) || bits < 0 || bits > 32) next
+				if (bits < 16) next
+				count = 2 ^ (32 - bits)
+				start = ip2int(base) - (ip2int(base) % count)
+				for (i = 0; i < count && total < 65536; i++) {
+					print int2ip(start + i) > ips
+					total++
+				}
+				next
+			}
+
+			# 单个 IPv4 也直接进 ipset
+			if (is_ip(d)) {
+				if (total < 65536) {
+					print int2ip(ip2int(d)) > ips
+					total++
+				}
+				next
+			}
+
+			print d > domains
 		}
-	' > "$NORM_LIST"
+	'
 }
 
 # 生成 dnsmasq 片段：域名加入 ipset + 指定防污染上游
@@ -68,25 +119,29 @@ gen_dns_block() {
 
 	{
 		echo "# ROUTEFLOW_BEGIN"
-		if [ -n "$dns" ]; then
-			# 使用 dnsmasq 原生 gfwlist 指令：命中域名加入 rf_gfw 集合，
-			# 并由指定的防污染服务器解析。
-			echo "gfwlist=$NORM_LIST@$dns^$IPSET"
-		else
-			# 仅做 ipset 归属，不改动上游 DNS
-			awk -v set="$IPSET" '
-				BEGIN { buf = ""; n = 0 }
-				{
-					if ($0 == "") next
-					buf = buf "/" $0
-					n++
-					if (n >= 16) {
-						printf "ipset=%s/%s\n", buf, set
-						buf = ""; n = 0
+		# NORM_LIST 中只有域名（IP/CIDR 已分流到 NORM_IP_LIST），
+		# 避免畸形条目导致 dnsmasq 解析失败。
+		if [ -s "$NORM_LIST" ]; then
+			if [ -n "$dns" ]; then
+				# 使用 dnsmasq 原生 gfwlist 指令：命中域名加入 rf_gfw 集合，
+				# 并由指定的防污染服务器解析。
+				echo "gfwlist=$NORM_LIST@$dns^$IPSET"
+			else
+				# 仅做 ipset 归属，不改动上游 DNS
+				awk -v set="$IPSET" '
+					BEGIN { buf = ""; n = 0 }
+					{
+						if ($0 == "") next
+						buf = buf "/" $0
+						n++
+						if (n >= 16) {
+							printf "ipset=%s/%s\n", buf, set
+							buf = ""; n = 0
+						}
 					}
-				}
-				END { if (n > 0) printf "ipset=%s/%s\n", buf, set }
-			' "$NORM_LIST"
+					END { if (n > 0) printf "ipset=%s/%s\n", buf, set }
+				' "$NORM_LIST"
+			fi
 		fi
 		echo "# ROUTEFLOW_END"
 	} > "$tmp"
@@ -108,6 +163,13 @@ setup_route() {
 
 	ipset -! create "$IPSET" hash:ip hashsize 4096 maxelem 131072
 	ipset flush "$IPSET"
+
+	# 把列表中的 IP / CIDR（已展开）灌入集合。
+	# 用 ipset restore 一次性导入，避免逐条 fork ipset。
+	if [ -s "$NORM_IP_LIST" ]; then
+		awk -v set="$IPSET" 'NF { printf "add %s %s\n", set, $0 }' "$NORM_IP_LIST" | \
+			ipset -! restore >/dev/null 2>&1
+	fi
 
 	iptables -t mangle -D PREROUTING -j ROUTEFLOW 2>/dev/null
 	iptables -t mangle -D OUTPUT -j ROUTEFLOW 2>/dev/null
