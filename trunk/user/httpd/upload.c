@@ -378,5 +378,16 @@ do_routeflow_upload_post(const char *url, FILE *stream, int clen, char *boundary
 	snprintf(bndr, sizeof(bndr), "\r\n--%s", boundary);
 	do_upload_file(stream, clen, bndr, "/etc/storage/routeflow/gfwlist.txt", "routeflow_file", check_header_gfwlist, 1);
 }
+
+void
+do_routeflow_cidr_upload_post(const char *url, FILE *stream, int clen, char *boundary)
+{
+	char bndr[128];
+
+	mkdir("/etc/storage/routeflow", 0755);
+
+	snprintf(bndr, sizeof(bndr), "\r\n--%s", boundary);
+	do_upload_file(stream, clen, bndr, "/etc/storage/routeflow/cidr.txt", "routeflow_cidr_file", check_header_gfwlist, 1);
+}
 #endif
 

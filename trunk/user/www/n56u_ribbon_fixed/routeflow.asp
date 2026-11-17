@@ -40,24 +40,26 @@ function initial(){
 	show_footer();
 	fill_status(routeflow_status());
 	$("routeflow_gfw_count").innerHTML = routeflow_gfw_count();
+	$("routeflow_cidr_count").innerHTML = routeflow_cidr_count();
 	$("rtf_kw").value = rtf_keyword;
-	renderRows();
-	if(rtf_tab == 'gfw' || rtf_keyword != '')
+	$("rtf_ckw").value = rtf_ckeyword;
+	renderRows('gfw');
+	renderRows('cidr');
+	if(rtf_tab == 'cidr' || rtf_ckeyword != '')
+		switchTab('cidr');
+	else if(rtf_tab == 'gfw' || rtf_keyword != '')
 		switchTab('gfw');
 }
 
 function switchTab(name){
-	if(name == 'gfw'){
-		$j("#li_gen").removeClass("active");
-		$j("#li_gfw").addClass("active");
-		$j("#tab_gen").hide();
-		$j("#tab_gfw").show();
-	}else{
-		$j("#li_gfw").removeClass("active");
-		$j("#li_gen").addClass("active");
-		$j("#tab_gfw").hide();
-		$j("#tab_gen").show();
-	}
+	$j("#li_gen").removeClass("active");
+	$j("#li_gfw").removeClass("active");
+	$j("#li_cidr").removeClass("active");
+	$j("#tab_gen").hide();
+	$j("#tab_gfw").hide();
+	$j("#tab_cidr").hide();
+	$j("#li_" + name).addClass("active");
+	$j("#tab_" + name).show();
 }
 
 function applyRule(){
@@ -86,9 +88,11 @@ function fill_status(status_code){
 	$("routeflow_status").innerHTML = '<span class="label label-' + (status_code != 0 ? 'success' : 'warning') + '">' + stext + '</span>';
 }
 
-function renderRows(){
-	var rows = routeflow_gfw_rows();
-	var tb = $("rtf_tbody");
+function renderRows(kind){
+	var isCidr = (kind == 'cidr');
+	var rows = isCidr ? routeflow_cidr_rows() : routeflow_gfw_rows();
+	var kw = isCidr ? rtf_ckeyword : rtf_keyword;
+	var tb = $(isCidr ? "rtf_cidr_tbody" : "rtf_tbody");
 	tb.innerHTML = "";
 	if(rows.length == 0){
 		var tr = document.createElement("tr");
@@ -96,7 +100,10 @@ function renderRows(){
 		td.colSpan = 3;
 		td.style.textAlign = "center";
 		td.style.color = "#999";
-		td.innerHTML = (rtf_keyword == "") ? "<#menu5_19_18#>" : "<#menu5_19_23#>";
+		if(kw == "")
+			td.innerHTML = isCidr ? "<#menu5_19_36#>" : "<#menu5_19_18#>";
+		else
+			td.innerHTML = isCidr ? "<#menu5_19_35#>" : "<#menu5_19_23#>";
 		tr.appendChild(td);
 		tb.appendChild(tr);
 		return;
@@ -125,14 +132,14 @@ function renderRows(){
 		eb.type = "button";
 		eb.className = "btn btn-mini btn-primary";
 		eb.value = "<#CTL_modify#>";
-		eb.onclick = (function(orig, le){ return function(){ editDomain(orig, le); }; })(dom, box);
+		eb.onclick = (function(k, orig, le){ return function(){ editDomain(k, orig, le); }; })(kind, dom, box);
 		td3.appendChild(eb);
 		td3.appendChild(document.createTextNode(" "));
 		var db = document.createElement("input");
 		db.type = "button";
 		db.className = "btn btn-mini";
 		db.value = "<#CTL_del#>";
-		db.onclick = (function(orig){ return function(){ delDomain(orig); }; })(dom);
+		db.onclick = (function(k, orig){ return function(){ delDomain(k, orig); }; })(kind, dom);
 		td3.appendChild(db);
 		tr.appendChild(td3);
 
@@ -140,45 +147,54 @@ function renderRows(){
 	}
 }
 
-function doSearch(){
-	var k = $("rtf_kw").value.replace(/^\s+|\s+$/g, "");
+function doSearch(kind){
+	var isCidr = (kind == 'cidr');
+	var k = $(isCidr ? "rtf_ckw" : "rtf_kw").value.replace(/^\s+|\s+$/g, "");
 	showLoading();
-	location.href = "/routeflow.asp?rtf_tab=gfw&keyword=" + encodeURIComponent(k);
+	if(isCidr)
+		location.href = "/routeflow.asp?rtf_tab=cidr&ckeyword=" + encodeURIComponent(k);
+	else
+		location.href = "/routeflow.asp?rtf_tab=gfw&keyword=" + encodeURIComponent(k);
 }
 
-function doReset(){
+function doReset(kind){
 	showLoading();
-	location.href = "/routeflow.asp?rtf_tab=gfw";
+	location.href = "/routeflow.asp?rtf_tab=" + (kind == 'cidr' ? "cidr" : "gfw");
 }
 
-function submitAction(action, oldd, newd){
-	var f = document.gfwForm;
+function submitAction(kind, action, oldd, newd){
+	var isCidr = (kind == 'cidr');
+	var f = isCidr ? document.cidrForm : document.gfwForm;
 	f.routeflow_action.value = action;
 	f.routeflow_old.value = oldd;
 	f.routeflow_domain.value = newd;
-	f.rtf_kw_back.value = rtf_keyword;
+	f.rtf_kw_back.value = isCidr ? rtf_ckeyword : rtf_keyword;
 	showLoading();
 	f.submit();
 }
 
-function addDomain(){
-	var v = $("rtf_add").value.replace(/^\s+|\s+$/g, "");
-	if(v == ""){ alert("<#menu5_19_22#>"); return; }
-	if(!confirm("<#menu5_19_20#>")) return;
-	submitAction("add", "", v);
+function addDomain(kind){
+	var isCidr = (kind == 'cidr');
+	var v = $(isCidr ? "rtf_cadd" : "rtf_add").value.replace(/^\s+|\s+$/g, "");
+	if(v == ""){ alert(isCidr ? "<#menu5_19_29#>" : "<#menu5_19_22#>"); return; }
+	if(!isCidr && v.indexOf('/') >= 0){ alert("<#menu5_19_38#>"); return; }
+	if(!confirm(isCidr ? "<#menu5_19_30#>" : "<#menu5_19_20#>")) return;
+	submitAction(kind, "add", "", v);
 }
 
-function editDomain(orig, le){
+function editDomain(kind, orig, le){
+	var isCidr = (kind == 'cidr');
 	var nv = le.value.replace(/^\s+|\s+$/g, "");
-	if(nv == ""){ alert("<#menu5_19_22#>"); le.value = orig; return; }
+	if(nv == ""){ alert(isCidr ? "<#menu5_19_29#>" : "<#menu5_19_22#>"); le.value = orig; return; }
+	if(!isCidr && nv.indexOf('/') >= 0){ alert("<#menu5_19_38#>"); le.value = orig; return; }
 	if(nv == orig) return;
-	if(!confirm("<#menu5_19_21#>")) return;
-	submitAction("edit", orig, nv);
+	if(!confirm(isCidr ? "<#menu5_19_31#>" : "<#menu5_19_21#>")) return;
+	submitAction(kind, "edit", orig, nv);
 }
 
-function delDomain(orig){
-	if(!confirm("<#menu5_19_19#>")) return;
-	submitAction("delete", orig, "");
+function delDomain(kind, orig){
+	if(!confirm(kind == 'cidr' ? "<#menu5_19_32#>" : "<#menu5_19_19#>")) return;
+	submitAction(kind, "delete", orig, "");
 }
 
 function enterKey(ev, fn){
@@ -246,6 +262,7 @@ function enterKey(ev, fn){
                                     <ul id="tabs" class="nav nav-tabs">
                                         <li id="li_gen" class="active"><a href="javascript:void(0)" onclick="switchTab('gen');return false;"><#menu5_1_1#></a></li>
                                         <li id="li_gfw"><a href="javascript:void(0)" onclick="switchTab('gfw');return false;"><#menu5_19_5#></a></li>
+                                        <li id="li_cidr"><a href="javascript:void(0)" onclick="switchTab('cidr');return false;"><#menu5_19_24#></a></li>
                                     </ul>
 
                                     <!-- ===== Tab: general settings ===== -->
@@ -321,12 +338,12 @@ function enterKey(ev, fn){
                                         </tr>
                                         <tr>
                                             <td colspan="2">
-                                                <input type="text" id="rtf_add" class="input" size="24" style="width: 200px" placeholder="<#menu5_19_12#>" onkeypress="return enterKey(event, addDomain);">
-                                                <input class="btn btn-primary" type="button" value="<#menu5_19_11#>" onclick="addDomain()">
+                                                <input type="text" id="rtf_add" class="input" size="24" style="width: 200px" placeholder="<#menu5_19_12#>" onkeypress="return enterKey(event, function(){ addDomain('gfw'); });">
+                                                <input class="btn btn-primary" type="button" value="<#menu5_19_11#>" onclick="addDomain('gfw')">
                                                 &nbsp;&nbsp;
-                                                <input type="text" id="rtf_kw" class="input" size="24" style="width: 200px" placeholder="<#menu5_19_14#>" onkeypress="return enterKey(event, doSearch);">
-                                                <input class="btn btn-primary" type="button" value="<#menu5_19_13#>" onclick="doSearch()">
-                                                <input class="btn" type="button" value="<#menu5_19_15#>" onclick="doReset()">
+                                                <input type="text" id="rtf_kw" class="input" size="24" style="width: 200px" placeholder="<#menu5_19_14#>" onkeypress="return enterKey(event, function(){ doSearch('gfw'); });">
+                                                <input class="btn btn-primary" type="button" value="<#menu5_19_13#>" onclick="doSearch('gfw')">
+                                                <input class="btn" type="button" value="<#menu5_19_15#>" onclick="doReset('gfw')">
                                             </td>
                                         </tr>
                                     </table>
@@ -336,6 +353,7 @@ function enterKey(ev, fn){
                                     <input type="hidden" name="routeflow_old" value="">
                                     <input type="hidden" name="routeflow_domain" value="">
                                     <input type="hidden" name="rtf_kw_back" value="">
+                                    <input type="hidden" name="rtf_list" value="gfw">
                                     <input type="hidden" name="current_page" value="routeflow.asp">
 
                                     <div id="rtf_list_box">
@@ -359,6 +377,60 @@ function enterKey(ev, fn){
                                                 <#menu5_19_10#><br>
                                                 <input type="file" name="routeflow_file" style="width: 300px" required>
                                                 <input class="btn btn-primary" style="width: 140px" type="submit" value="<#menu5_19_9#>" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    </form>
+                                    </div>
+
+                                    <!-- ===== Tab: CIDR list ===== -->
+                                    <div id="tab_cidr" style="display:none">
+                                    <table width="100%" cellpadding="4" cellspacing="0" class="table rtf_bar">
+                                        <tr> <th width="30%"><#menu5_19_25#></th>
+                                            <td><span id="routeflow_cidr_count">0</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2">
+                                                <input type="text" id="rtf_cadd" class="input" size="24" style="width: 200px" placeholder="<#menu5_19_27#>" onkeypress="return enterKey(event, function(){ addDomain('cidr'); });">
+                                                <input class="btn btn-primary" type="button" value="<#menu5_19_26#>" onclick="addDomain('cidr')">
+                                                &nbsp;&nbsp;
+                                                <input type="text" id="rtf_ckw" class="input" size="24" style="width: 200px" placeholder="<#menu5_19_14#>" onkeypress="return enterKey(event, function(){ doSearch('cidr'); });">
+                                                <input class="btn btn-primary" type="button" value="<#menu5_19_13#>" onclick="doSearch('cidr')">
+                                                <input class="btn" type="button" value="<#menu5_19_15#>" onclick="doReset('cidr')">
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                    <form method="post" name="cidrForm" action="/routeflow_action.asp" target="hidden_frame">
+                                    <input type="hidden" name="routeflow_action" value="">
+                                    <input type="hidden" name="routeflow_old" value="">
+                                    <input type="hidden" name="routeflow_domain" value="">
+                                    <input type="hidden" name="rtf_kw_back" value="">
+                                    <input type="hidden" name="rtf_list" value="cidr">
+                                    <input type="hidden" name="current_page" value="routeflow.asp">
+
+                                    <div id="rtf_cidr_list_box">
+                                    <table width="100%" cellpadding="4" cellspacing="0" class="table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 50px;">#</th>
+                                                <th><#menu5_19_28#></th>
+                                                <th style="width: 130px;"><#menu5_19_17#></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="rtf_cidr_tbody"></tbody>
+                                    </table>
+                                    </div>
+                                    </form>
+
+                                    <form method="post" name="cidrUploadForm" action="/routeflow_cidr_upload.cgi" enctype="multipart/form-data" target="hidden_frame" onsubmit="showLoading();">
+                                    <table width="100%" cellpadding="4" cellspacing="0" class="table">
+                                        <tr>
+                                            <td>
+                                                <#menu5_19_33#><br>
+                                                <span style="color:#999"><#menu5_19_34#></span><br>
+                                                <input type="file" name="routeflow_cidr_file" style="width: 300px" required>
+                                                <input class="btn btn-primary" style="width: 140px" type="submit" value="<#menu5_19_37#>" />
                                             </td>
                                         </tr>
                                     </table>

@@ -245,6 +245,18 @@ strings trunk/romfs/usr/sbin/httpd | grep -F 'rtf_tab=gfw'
 
 `all=1` 时后端输出前 1000 条作为预览；正常进入页面仍保持空列表。
 
+### 4.6 CIDR 网段使用独立列表
+
+Telegram 等客户端直接按 IP 段访问，把 `91.108.4.0/22` 写进 GWF 域名列表会让
+dnsmasq 的 gfwlist 补丁拼出残缺的 `server=` 参数并触发段错误，导致全网 DNS 失效。
+
+因此 CIDR 走独立的 `/etc/storage/routeflow/cidr.txt`：
+
+- 前端第三个选项卡负责增删改查、搜索与文件上传
+- `routeflow.sh` 的 `normalize_cidr_list()` 校验并把网段展开为单个 IPv4，
+  由 `setup_route()` 用 `ipset restore` 一次性导入
+- GWF 域名列表与 dnsmasq 配置完全不涉及 CIDR
+
 ---
 
 ## 五、构建环境相关问题
@@ -294,11 +306,22 @@ find trunk/user -name '*.o' -type f -delete
 ### 5.4 交叉工具链
 
 ```shell
-cd toolchain-mipsel && ./dl_toolchain.sh
+mkdir -p toolchain-mipsel/toolchain-3.4.x
+cd toolchain-mipsel
+curl -LO https://github.com/hanwckf/padavan-toolchain/releases/download/v1.1/mipsel-linux-uclibc.tar.xz
+tar -xf mipsel-linux-uclibc.tar.xz -C toolchain-3.4.x
 ```
 
-脚本会下载 `mipsel-linux-uclibc.tar.xz` 并解压到 `toolchain-3.4.x/`。
-构建脚本通过 `trunk/toolchain.inc` 里的 `CONFIG_TOOLCHAIN_DIR` 定位它。
+构建脚本通过 `trunk/toolchain.inc` 里的 `CONFIG_TOOLCHAIN_DIR` 定位
+`toolchain-mipsel/toolchain-3.4.x`（GCC 7.4.0）。
+
+### 5.5 首次构建的两个常见错误
+
+1. `tools/mksquashfs_xz/xz-5.2.4` 报 `./config.status: No such file or directory`：
+   进入该目录按 `tools/mksquashfs_xz/Makefile` 里的参数手动执行一次 `./configure`
+2. 构建 `libs/libmnl` 等包时报 `aclocal-1.14: command not found`：
+   生成的 autotools 文件比源文件旧，按 5.2 的方式刷新
+   `aclocal.m4 / configure / Makefile.in / Makefile` 的时间戳即可，无需安装旧版 automake
 
 ---
 
@@ -313,7 +336,7 @@ cd toolchain-mipsel && ./dl_toolchain.sh
 | `trunk/user/httpd/web_ex.c` | RouteFlow 后端钩子（add/edit/delete/搜索/状态） |
 | `trunk/user/httpd/upload.c` | GWF 文件流式上传 |
 | `trunk/user/routeflow/routeflow.sh` | 分流主逻辑（ipset + iptables + dnsmasq） |
-| `trunk/user/www/n56u_ribbon_fixed/routeflow.asp` | 双选项卡前端页面 |
+| `trunk/user/www/n56u_ribbon_fixed/routeflow.asp` | 三选项卡前端页面（一般设置 / GWF 域名 / CIDR 网段） |
 | `trunk/user/www/dict/CN.dict` / `EN.footer` | 中英文词条 |
 | `trunk/user/www/n56u_ribbon_fixed/state.js` | 菜单与选项卡注册 |
 
@@ -331,3 +354,5 @@ cd toolchain-mipsel && ./dl_toolchain.sh
 6. 上传一个数千行的纯文本列表 → 数量正确、预览正常
 7. `logread` 中能看到 `Storage save` 与 routeflow 重启日志
 8. 重启设备后列表仍在（已被 `mtd_storage.sh save` 持久化）
+9. CIDR 列表添加 `91.108.4.0/22` 后，`ipset list rf_gfw` 能看到 `91.108.4.0` ~ `91.108.7.255`，且 DNS 正常
+10. 在 GWF 选项卡输入含 `/` 的条目时，会提示改用「CIDR网段列表」
