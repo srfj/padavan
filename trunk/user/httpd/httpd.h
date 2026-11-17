@@ -204,6 +204,7 @@ extern void do_restore_nv_post(const char *url, FILE *stream, int clen, char *bo
 extern void do_restore_st_post(const char *url, FILE *stream, int clen, char *boundary);
 #if defined(APP_ROUTEFLOW)
 extern void do_routeflow_upload_post(const char *url, FILE *stream, int clen, char *boundary);
+extern void do_routeflow_cidr_upload_post(const char *url, FILE *stream, int clen, char *boundary);
 #endif
 
 // web_ex.c

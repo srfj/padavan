@@ -2055,10 +2055,41 @@ static int dnsforwarder_status_hook(int eid, webs_t wp, int argc, char **argv)
 #endif
 
 #if defined(APP_ROUTEFLOW)
+#define RTF_DIR		"/etc/storage/routeflow"
+#define RTF_LIST	RTF_DIR "/gfwlist.txt"
+#define RTF_TMP		RTF_DIR "/gfwlist.tmp"
+#define RTF_CIDR_LIST	RTF_DIR "/cidr.txt"
+#define RTF_CIDR_TMP	RTF_DIR "/cidr.tmp"
+#define RTF_DEF_LIST	"/etc_ro/routeflow/gfwlist.txt"
+#define RTF_MAX_ROWS	1000
+
+/* 统计列表中非空、非注释的行数 */
+static int
+rtf_count_lines(const char *path)
+{
+	FILE *f;
+	char line[512];
+	int n = 0;
+
+	if (!(f = fopen(path, "r")))
+		return 0;
+
+	while (fgets(line, sizeof(line), f)) {
+		char *p = line;
+		while (*p == ' ' || *p == '\t')
+			p++;
+		if (*p == '\0' || *p == '\n' || *p == '\r' || *p == '#')
+			continue;
+		n++;
+	}
+	fclose(f);
+
+	return n;
+}
+
 static int routeflow_status_hook(int eid, webs_t wp, int argc, char **argv)
 {
 	int status_code = 0;
-	char count[16] = "0";
 	FILE *f;
 
 	if ((f = fopen("/tmp/routeflow.run", "r")) != NULL) {
@@ -2066,32 +2097,11 @@ static int routeflow_status_hook(int eid, webs_t wp, int argc, char **argv)
 		fclose(f);
 	}
 
-	f = fopen("/etc/storage/routeflow/gfwlist.txt", "r");
-	if (f) {
-		char line[256];
-		int n = 0;
-		while (fgets(line, sizeof(line), f)) {
-			char *p = line;
-			while (*p == ' ' || *p == '\t')
-				p++;
-			if (*p == '\0' || *p == '\n' || *p == '\r' || *p == '#')
-				continue;
-			n++;
-		}
-		fclose(f);
-		snprintf(count, sizeof(count), "%d", n);
-	}
-
 	websWrite(wp, "function routeflow_status() { return %d;}\n", status_code);
-	websWrite(wp, "function routeflow_gfw_count() { return '%s';}\n", count);
+	websWrite(wp, "function routeflow_gfw_count() { return '%d';}\n", rtf_count_lines(RTF_LIST));
+	websWrite(wp, "function routeflow_cidr_count() { return '%d';}\n", rtf_count_lines(RTF_CIDR_LIST));
 	return 0;
 }
-
-#define RTF_DIR		"/etc/storage/routeflow"
-#define RTF_LIST	RTF_DIR "/gfwlist.txt"
-#define RTF_TMP		RTF_DIR "/gfwlist.tmp"
-#define RTF_DEF_LIST	"/etc_ro/routeflow/gfwlist.txt"
-#define RTF_MAX_ROWS	1000
 
 /* 去掉字符串首尾的空白与换行 */
 static void
@@ -2158,6 +2168,62 @@ rtf_url_encode(webs_t wp, const char *s)
 	}
 }
 
+/* 校验 IPv4 点分十进制地址 */
+static int
+rtf_valid_ipv4(const char *s)
+{
+	int part = 0, val = 0, digits = 0;
+	const char *p = s;
+
+	if (!s || !*s)
+		return 0;
+
+	for (;; p++) {
+		if (*p >= '0' && *p <= '9') {
+			val = val * 10 + (*p - '0');
+			if (++digits > 3 || val > 255)
+				return 0;
+		} else if (*p == '.' || *p == '\0') {
+			if (digits == 0 || part > 3)
+				return 0;
+			if (*p == '\0')
+				return part == 3;
+			part++;
+			val = 0;
+			digits = 0;
+		} else
+			return 0;
+	}
+}
+
+/* 校验 IPv4 或 IPv4/prefix（prefix 0-32） */
+static int
+rtf_valid_cidr(const char *s)
+{
+	char ip[64], *slash;
+	const char *p;
+	int bits = 0;
+
+	if (!s || strlen(s) >= sizeof(ip))
+		return 0;
+	strcpy(ip, s);
+
+	if ((slash = strchr(ip, '/')) != NULL) {
+		*slash++ = '\0';
+		if (!*slash)
+			return 0;
+		for (p = slash; *p; p++) {
+			if (*p < '0' || *p > '9')
+				return 0;
+			bits = bits * 10 + (*p - '0');
+			if (bits > 32)
+				return 0;
+		}
+	}
+
+	return rtf_valid_ipv4(ip);
+}
+
 /* 首次使用时用出厂默认列表初始化 gfwlist.txt */
 static void
 rtf_seed_list(void)
@@ -2183,23 +2249,32 @@ rtf_seed_list(void)
 	}
 }
 
-/* 添加单个域名，成功返回 1 */
+/* 添加单个条目到指定列表，成功返回 1。
+ * cidr 为真时按 IPv4/CIDR 校验；否则作为域名处理并拒绝含 "/" 的条目。 */
 static int
-rtf_list_add(const char *domain)
+rtf_list_add(const char *path, const char *entry, int cidr)
 {
 	char d[256], line[512];
 	FILE *f;
 
-	if (!domain || !*domain)
+	if (!entry || !*entry)
 		return 0;
-	snprintf(d, sizeof(d), "%s", domain);
+	snprintf(d, sizeof(d), "%s", entry);
 	rtf_trim(d);
 	if (!d[0] || d[0] == '#')
 		return 0;
+	if (cidr) {
+		if (!rtf_valid_cidr(d))
+			return 0;
+	} else if (strchr(d, '/')) {
+		return 0;
+	}
 
-	rtf_seed_list();
+	mkdir(RTF_DIR, 0755);
+	if (!strcmp(path, RTF_LIST))
+		rtf_seed_list();
 
-	if ((f = fopen(RTF_LIST, "r"))) {
+	if ((f = fopen(path, "r"))) {
 		while (fgets(line, sizeof(line), f)) {
 			rtf_trim(line);
 			if (strcasecmp(line, d) == 0) {
@@ -2210,16 +2285,16 @@ rtf_list_add(const char *domain)
 		fclose(f);
 	}
 
-	if (!(f = fopen(RTF_LIST, "a")))
+	if (!(f = fopen(path, "a")))
 		return 0;
 	fprintf(f, "%s\n", d);
 	fclose(f);
 	return 1;
 }
 
-/* 修改域名 (oldd -> newd)，成功返回 1 */
+/* 修改条目 (oldd -> newd)，成功返回 1 */
 static int
-rtf_list_edit(const char *oldd, const char *newd)
+rtf_list_edit(const char *path, const char *tmp, const char *oldd, const char *newd, int cidr)
 {
 	char o[256], n[256], line[512];
 	FILE *in, *out;
@@ -2233,10 +2308,16 @@ rtf_list_edit(const char *oldd, const char *newd)
 	rtf_trim(n);
 	if (!o[0] || !n[0] || strcmp(o, n) == 0)
 		return 0;
-
-	if (!(in = fopen(RTF_LIST, "r")))
+	if (cidr) {
+		if (!rtf_valid_cidr(n))
+			return 0;
+	} else if (strchr(n, '/')) {
 		return 0;
-	if (!(out = fopen(RTF_TMP, "w"))) {
+	}
+
+	if (!(in = fopen(path, "r")))
+		return 0;
+	if (!(out = fopen(tmp, "w"))) {
 		fclose(in);
 		return 0;
 	}
@@ -2253,30 +2334,30 @@ rtf_list_edit(const char *oldd, const char *newd)
 	fclose(out);
 
 	if (ok)
-		rename(RTF_TMP, RTF_LIST);
+		rename(tmp, path);
 	else
-		unlink(RTF_TMP);
+		unlink(tmp);
 	return ok;
 }
 
-/* 删除单个域名，成功返回 1 */
+/* 删除单个条目，成功返回 1 */
 static int
-rtf_list_delete(const char *domain)
+rtf_list_delete(const char *path, const char *tmp, const char *entry)
 {
 	char d[256], line[512];
 	FILE *in, *out;
 	int ok = 0;
 
-	if (!domain || !*domain)
+	if (!entry || !*entry)
 		return 0;
-	snprintf(d, sizeof(d), "%s", domain);
+	snprintf(d, sizeof(d), "%s", entry);
 	rtf_trim(d);
 	if (!d[0])
 		return 0;
 
-	if (!(in = fopen(RTF_LIST, "r")))
+	if (!(in = fopen(path, "r")))
 		return 0;
-	if (!(out = fopen(RTF_TMP, "w"))) {
+	if (!(out = fopen(tmp, "w"))) {
 		fclose(in);
 		return 0;
 	}
@@ -2294,38 +2375,38 @@ rtf_list_delete(const char *domain)
 	fclose(out);
 
 	if (ok)
-		rename(RTF_TMP, RTF_LIST);
+		rename(tmp, path);
 	else
-		unlink(RTF_TMP);
+		unlink(tmp);
 	return ok;
 }
 
-/* 输出当前选项卡与搜索关键字到 JS 变量 */
+/* 输出当前选项卡与两个列表的搜索关键字到 JS 变量 */
 static int routeflow_gfw_state_hook(int eid, webs_t wp, int argc, char **argv)
 {
 	websWrite(wp, "var rtf_tab='");
 	rtf_js_escape(wp, websGetVar(wp, "rtf_tab", ""));
 	websWrite(wp, "';\nvar rtf_keyword='");
 	rtf_js_escape(wp, websGetVar(wp, "keyword", ""));
+	websWrite(wp, "';\nvar rtf_ckeyword='");
+	rtf_js_escape(wp, websGetVar(wp, "ckeyword", ""));
 	websWrite(wp, "';\n");
 	return 0;
 }
 
-/* 输出按关键字模糊匹配的域名列表 */
-static int routeflow_gfw_rows_hook(int eid, webs_t wp, int argc, char **argv)
+/* 输出指定列表中按关键字模糊匹配的条目 */
+static void
+rtf_emit_rows(webs_t wp, const char *path, const char *kw, int show_all, const char *func)
 {
-	const char *kw = websGetVar(wp, "keyword", "");
-	const char *all = websGetVar(wp, "all", "");
 	FILE *f;
 	char line[512];
 	int shown = 0;
-	int show_all = (all && all[0] == '1');
 
-	websWrite(wp, "function routeflow_gfw_rows() { return [");
+	websWrite(wp, "function %s() { return [", func);
 
 	/* 默认（既无关键字也无 all 参数）不输出任何数据；
 	 * all=1 时用于“上传后预览”，列出前 RTF_MAX_ROWS 条。 */
-	if (((kw && *kw) || show_all) && (f = fopen(RTF_LIST, "r"))) {
+	if (((kw && *kw) || show_all) && (f = fopen(path, "r"))) {
 		while (fgets(line, sizeof(line), f)) {
 			rtf_trim(line);
 			if (!line[0] || line[0] == '#')
@@ -2343,6 +2424,18 @@ static int routeflow_gfw_rows_hook(int eid, webs_t wp, int argc, char **argv)
 	}
 
 	websWrite(wp, "];}\n");
+}
+
+/* 同时输出 GWF 域名列表与 CIDR 网段列表 */
+static int routeflow_gfw_rows_hook(int eid, webs_t wp, int argc, char **argv)
+{
+	const char *kw = websGetVar(wp, "keyword", "");
+	const char *ckw = websGetVar(wp, "ckeyword", "");
+	const char *all = websGetVar(wp, "all", "");
+	int show_all = (all && all[0] == '1');
+
+	rtf_emit_rows(wp, RTF_LIST, kw, show_all, "routeflow_gfw_rows");
+	rtf_emit_rows(wp, RTF_CIDR_LIST, ckw, show_all, "routeflow_cidr_rows");
 	return 0;
 }
 
@@ -2350,15 +2443,19 @@ static int routeflow_action_hook(int eid, webs_t wp, int argc, char **argv)
 {
 	char *action = websGetVar(wp, "routeflow_action", "");
 	char *kw = websGetVar(wp, "rtf_kw_back", "");
-	char *domain = websGetVar(wp, "routeflow_domain", "");
+	char *entry = websGetVar(wp, "routeflow_domain", "");
+	char *list = websGetVar(wp, "rtf_list", "gfw");
+	int cidr = (list && !strcmp(list, "cidr"));
+	const char *path = cidr ? RTF_CIDR_LIST : RTF_LIST;
+	const char *tmp = cidr ? RTF_CIDR_TMP : RTF_TMP;
 	int changed = 0;
 
 	if (!strcmp(action, "add"))
-		changed = rtf_list_add(domain);
+		changed = rtf_list_add(path, entry, cidr);
 	else if (!strcmp(action, "edit"))
-		changed = rtf_list_edit(websGetVar(wp, "routeflow_old", ""), domain);
+		changed = rtf_list_edit(path, tmp, websGetVar(wp, "routeflow_old", ""), entry, cidr);
 	else if (!strcmp(action, "delete"))
-		changed = rtf_list_delete(websGetVar(wp, "routeflow_old", ""));
+		changed = rtf_list_delete(path, tmp, websGetVar(wp, "routeflow_old", ""));
 
 	/* 变更后自动保存并重启服务 */
 	if (changed) {
@@ -2366,13 +2463,16 @@ static int routeflow_action_hook(int eid, webs_t wp, int argc, char **argv)
 		notify_rc(RCN_RESTART_ROUTEFLOW);
 	}
 
-	/* 若原本没有搜索关键字，则用新增/修改后的域名作为关键字，方便用户立即看到结果 */
+	/* 若原本没有搜索关键字，则用新增/修改后的条目作为关键字，方便用户立即看到结果 */
 	if (changed && !kw[0] && strcmp(action, "delete") != 0)
-		kw = domain;
+		kw = entry;
 
 	/* 注意：routeflow_action.asp 中 <% routeflow_action(); %> 位于 <script> 之外，
 	 * 因此这里必须自行输出 <script> 标签，否则脚本不会执行，页面会一直停在“正在处理”。 */
-	websWrite(wp, "<script>parent.location.href=\"/routeflow.asp?rtf_tab=gfw&keyword=");
+	websWrite(wp, "<script>parent.location.href=\"/routeflow.asp?rtf_tab=");
+	websWrite(wp, cidr ? "cidr" : "gfw");
+	websWrite(wp, "&");
+	websWrite(wp, cidr ? "ckeyword=" : "keyword=");
 	rtf_url_encode(wp, kw);
 	websWrite(wp, "\";</script>\n");
 	return 0;
@@ -4050,6 +4150,18 @@ do_routeflow_upload_cgi(const char *url, FILE *stream)
 		"<script>parent.location.href='/routeflow.asp?rtf_tab=gfw&all=1';</script></head><body></body></html>\n");
 	fflush(stream);
 }
+
+static void
+do_routeflow_cidr_upload_cgi(const char *url, FILE *stream)
+{
+	if (get_login_safe()) {
+		doSystem("/sbin/mtd_storage.sh save >/dev/null 2>&1 &");
+		notify_rc(RCN_RESTART_ROUTEFLOW);
+	}
+	fprintf(stream, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html\">"
+		"<script>parent.location.href='/routeflow.asp?rtf_tab=cidr&all=1';</script></head><body></body></html>\n");
+	fflush(stream);
+}
 #endif
 
 static void
@@ -4199,6 +4311,7 @@ struct mime_handler mime_handlers[] = {
 	{ "restore_st.cgi*", "text/html", no_cache_IE, do_restore_st_post, do_restore_st_cgi, 1 },
 #if defined(APP_ROUTEFLOW)
 	{ "routeflow_upload.cgi*", "text/html", no_cache_IE, do_routeflow_upload_post, do_routeflow_upload_cgi, 1 },
+	{ "routeflow_cidr_upload.cgi*", "text/html", no_cache_IE, do_routeflow_cidr_upload_post, do_routeflow_cidr_upload_cgi, 1 },
 #endif
 
 	{ NULL, NULL, NULL, NULL, NULL, 0 }

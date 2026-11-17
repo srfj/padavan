@@ -2,7 +2,9 @@
 #
 # RouteFlow - 国内外流量分流 + DNS 防污染
 #
-# 国内流量走 WAN 口，国外(GWF 列表中的域名)流量走指定的内网旁路由。
+# 国内流量走 WAN 口，国外流量走指定的内网旁路由：
+#   - GWF 域名列表：命中域名解析出的地址加入 ipset
+#   - CIDR 网段列表：IPv4/CIDR 直接展开后加入 ipset（适用于 Telegram 等）
 # DNS 防污染：为 GWF 列表中的域名指定干净的境外上游 DNS。
 #
 # 依赖：ipset / iptables / ip(iproute2) / 带 gfwlist 补丁的 dnsmasq
@@ -10,6 +12,7 @@
 
 RF_DIR="/etc/storage/routeflow"
 GFW_LIST="$RF_DIR/gfwlist.txt"
+CIDR_LIST="$RF_DIR/cidr.txt"
 DEF_LIST="/etc_ro/routeflow/gfwlist.txt"
 NORM_LIST="/tmp/routeflow/gfwlist.norm.txt"
 NORM_IP_LIST="/tmp/routeflow/ipset.norm.txt"
@@ -44,21 +47,40 @@ seed_list() {
 	fi
 }
 
-# 把用户列表规范化为两份：
-#   NORM_LIST    —— 域名，交给 dnsmasq 的 gfwlist 指令
-#   NORM_IP_LIST —— IPv4 地址，CIDR 已展开为单个地址，直接灌入 ipset
+# 把 GWF 列表规范化为“每行一个域名”，交给 dnsmasq。
 # 兼容空格/逗号/换行分隔。
 #
-# 注意：IPv4/CIDR 条目绝对不能写进 dnsmasq 的 gfwlist/ipset 配置。
-# gfwlist 补丁按域名解析每一行，遇到 "91.108.4.0/22" 会把它拆成
-# "/91.108.4.0" 这种残缺的 server= 参数，进而踩到 ret_err() 里
-# strcpy() 写字符串常量的坑，dnsmasq 直接段错误退出——表现为全网 DNS 失效。
+# 注意：含 "/" 的条目（IPv4/CIDR）一律不交给 dnsmasq。gfwlist 补丁按域名
+# 解析每一行，遇到 "91.108.4.0/22" 会拼出 "/91.108.4.0" 这种残缺的
+# server= 参数，触发 ret_err() 里 strcpy() 写字符串常量，dnsmasq 直接段错误
+# 退出——表现为全网 DNS 失效。IP/CIDR 请写到 CIDR 列表。
 normalize_list() {
 	mkdir -p "$(dirname "$NORM_LIST")" 2>/dev/null
 	: > "$NORM_LIST"
-	: > "$NORM_IP_LIST"
 	tr ', \t' '\n\n\n' < "$GFW_LIST" 2>/dev/null | \
-	awk -v domains="$NORM_LIST" -v ips="$NORM_IP_LIST" '
+	awk '
+		{
+			sub(/\r$/, "")
+			d = tolower($0)
+			gsub(/^[ \t]+/, "", d)
+			gsub(/[ \t]+$/, "", d)
+			sub(/^\*\./, "", d)
+			sub(/^\./, "", d)
+			if (d == "" || d ~ /^#/) next
+			if (index(d, "/")) next
+			print d
+		}
+	' > "$NORM_LIST"
+}
+
+# 把 CIDR 列表（IPv4 / IPv4/prefix）展开成单个地址，写入 NORM_IP_LIST，
+# 由 setup_route 直接灌入 ipset。CIDR 列表与 GWF 域名列表互相独立。
+normalize_cidr_list() {
+	mkdir -p "$(dirname "$NORM_IP_LIST")" 2>/dev/null
+	: > "$NORM_IP_LIST"
+	[ -f "$CIDR_LIST" ] || return 0
+	tr ', \t' '\n\n\n' < "$CIDR_LIST" 2>/dev/null | \
+	awk -v ips="$NORM_IP_LIST" '
 		function octet(s) {
 			return s ~ /^[0-9][0-9]?[0-9]?$/ && s + 0 <= 255
 		}
@@ -79,8 +101,6 @@ normalize_list() {
 			d = tolower($0)
 			gsub(/^[ \t]+/, "", d)
 			gsub(/[ \t]+$/, "", d)
-			sub(/^\*\./, "", d)
-			sub(/^\./, "", d)
 			if (d == "" || d ~ /^#/) next
 
 			# CIDR：校验后展开成单个 IPv4，避免依赖 hash:net 集合类型
@@ -98,16 +118,11 @@ normalize_list() {
 				next
 			}
 
-			# 单个 IPv4 也直接进 ipset
-			if (is_ip(d)) {
-				if (total < 65536) {
-					print int2ip(ip2int(d)) > ips
-					total++
-				}
-				next
+			# 单个 IPv4 也可以直接写进 CIDR 列表
+			if (is_ip(d) && total < 65536) {
+				print int2ip(ip2int(d)) > ips
+				total++
 			}
-
-			print d > domains
 		}
 	'
 }
@@ -221,6 +236,7 @@ func_start() {
 	load_modules
 	seed_list
 	normalize_list
+	normalize_cidr_list
 	gen_dns_block "$dns"
 	setup_route "$gw"
 	touch "$RUN_FLAG"
